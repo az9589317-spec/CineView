@@ -92,8 +92,8 @@ function WatchPageContent({ movieId }: { movieId: string }) {
   );
 }
 
-export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function WatchPage({ params }: { params: { id: string } }) {
+  const { id } = use(React.use(params));
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <WatchPageContent movieId={id} />
