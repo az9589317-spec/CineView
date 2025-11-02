@@ -110,7 +110,7 @@ export default function Home() {
               alt={`Hero image for ${featuredMovie.title}`}
               fill
               priority
-              className="object-cover animate-slide-in-from-right"
+              className="object-cover animate-fade-in"
               data-ai-hint={featuredMovie.heroImageHint}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
