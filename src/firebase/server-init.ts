@@ -19,6 +19,7 @@ export async function initializeServerApp() {
 
   let adminApp: App;
   try {
+    // Explicitly providing the projectId helps the SDK locate credentials in some environments.
     adminApp = initializeApp(
       {
         projectId: firebaseConfig.projectId,
