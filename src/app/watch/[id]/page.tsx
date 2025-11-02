@@ -1,23 +1,25 @@
 "use client";
 
-import { Suspense, use } from "react";
+import React, { Suspense, use } from "react";
 import { doc } from "firebase/firestore";
-import { useDocument } from "react-firebase-hooks/firestore";
-import { initializeFirebase } from "@/firebase";
+import { useFirestore, useMemoFirebase } from "@/firebase";
 import { Movie } from "@/lib/types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecommendationsCarousel } from "@/components/ai/recommendations-carousel";
-
-const { firestore } = initializeFirebase();
+import { useDoc } from "@/firebase/firestore/use-doc";
 
 function WatchPageContent({ movieId }: { movieId: string }) {
-  const [movieDoc, loading, error] = useDocument(
-    doc(firestore, "movies", movieId)
-  );
+  const firestore = useFirestore();
+  const movieRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, "movies", movieId);
+  }, [firestore, movieId]);
 
-  if (loading) {
+  const { data: movie, isLoading, error } = useDoc<Movie>(movieRef);
+
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Skeleton className="mb-4 h-[50vh] w-full" />
@@ -27,7 +29,7 @@ function WatchPageContent({ movieId }: { movieId: string }) {
     );
   }
 
-  if (error || !movieDoc?.exists()) {
+  if (error || !movie) {
     return (
       <div className="container mx-auto flex min-h-[80vh] items-center justify-center p-4">
         <Alert variant="destructive" className="max-w-md">
@@ -43,7 +45,6 @@ function WatchPageContent({ movieId }: { movieId: string }) {
     );
   }
 
-  const movie = movieDoc.data() as Movie;
   const isGoogleDrive = movie.videoUrl?.includes("drive.google.com");
 
   return (
@@ -93,7 +94,7 @@ function WatchPageContent({ movieId }: { movieId: string }) {
 }
 
 export default function WatchPage({ params }: { params: { id: string } }) {
-  const { id } = use(React.use(params));
+  const { id } = use(params);
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <WatchPageContent movieId={id} />
