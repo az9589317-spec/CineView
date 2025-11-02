@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -86,17 +87,23 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
     }, [defaultValue]);
 
     const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Enter") {
-            if (inputValue.trim()) {
-                const newValue = inputValue.trim();
-                if (!options.some(o => o.value.toLowerCase() === newValue.toLowerCase()) && !selectedValues.includes(newValue)) {
-                    const newSelectedValues = [...selectedValues, newValue];
-                    setSelectedValues(newSelectedValues);
-                    onValueChange(newSelectedValues);
-                }
-                setInputValue("");
-                event.preventDefault();
+        if (event.key === "Enter" && inputValue) {
+            event.preventDefault();
+            const newOptionValue = inputValue.trim();
+            
+            // Check if this value already exists either as an option or as a selected value
+            const valueExists = options.some(o => o.value.toLowerCase() === newOptionValue.toLowerCase()) || selectedValues.some(v => v.toLowerCase() === newOptionValue.toLowerCase());
+
+            if (newOptionValue && !valueExists) {
+                const newSelected = [...selectedValues, newOptionValue];
+                setSelectedValues(newSelected);
+                onValueChange(newSelected);
+            } else if (newOptionValue && !selectedValues.some(v => v.toLowerCase() === newOptionValue.toLowerCase())) {
+                const newSelected = [...selectedValues, newOptionValue];
+                setSelectedValues(newSelected);
+                onValueChange(newSelected);
             }
+            setInputValue("");
         } else if (event.key === "Backspace" && !inputValue) {
             const newSelectedValues = [...selectedValues];
             newSelectedValues.pop();
@@ -119,14 +126,14 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
     }
 
     const displayedOptions = React.useMemo(() => {
-      const selectedSet = new Set(selectedValues);
-      const combined = [
-        ...options,
-        ...selectedValues
-          .filter(v => !options.some(o => o.value === v))
-          .map(v => ({ label: v, value: v }))
-      ];
-      return Array.from(new Set(combined.map(o => o.value))).map(v => combined.find(o => o.value === v)!);
+      const uniqueOptions = new Map<string, {label: string, value: string}>();
+      options.forEach(option => uniqueOptions.set(option.value.toLowerCase(), option));
+      selectedValues.forEach(value => {
+        if (!uniqueOptions.has(value.toLowerCase())) {
+          uniqueOptions.set(value.toLowerCase(), { label: value, value: value });
+        }
+      });
+      return Array.from(uniqueOptions.values());
     }, [options, selectedValues]);
 
 
@@ -227,7 +234,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
             />
             <CommandList>
               <CommandEmpty>
-                {`No results found. Press "Enter" to add "${inputValue}"`}
+                {`No results found. Press "Enter" to add.`}
               </CommandEmpty>
               <CommandGroup>
                 {displayedOptions.map((option) => {
