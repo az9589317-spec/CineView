@@ -106,7 +106,7 @@ export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
         console.error('Error saving movie:', error);
         
         // This is a Firestore permission error, let's format it for the emitter
-        if (error instanceof Error && error.message.includes('permission-denied')) {
+        if (error instanceof Error && (error.message.includes('permission-denied') || error.message.includes('insufficient permissions'))) {
              const { firestore } = initializeFirebase();
              const moviesCollection = collection(firestore, 'movies');
              errorEmitter.emit(
