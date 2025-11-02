@@ -2,12 +2,13 @@
 
 import { generateAiSummary, AiSummaryInput } from '@/ai/flows/ai-summary-for-title';
 import { recommendBasedOnHistory } from '@/ai/flows/recommendation-based-on-history';
-import { movies } from '@/lib/data';
 import type { Movie } from '@/lib/types';
 import ImageKit from 'imagekit';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { initializeServerApp } from '@/firebase/server-init';
 import { revalidatePath } from 'next/cache';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
@@ -17,24 +18,27 @@ const imagekit = new ImageKit({
 
 export async function getRecommendations(viewingHistory: string): Promise<Movie[]> {
   try {
+    await initializeServerApp();
+    const firestore = getAdminFirestore();
+    const moviesSnapshot = await firestore.collection('movies').get();
+    const allMovies = moviesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Movie[];
+
     const result = await recommendBasedOnHistory({ viewingHistory });
     const recommendedTitles = result.recommendations.split(',').map(t => t.trim().toLowerCase());
     
-    const recommendedMovies = movies.filter(movie => 
+    const recommendedMovies = allMovies.filter(movie => 
       recommendedTitles.includes(movie.title.toLowerCase())
     );
     
-    // To ensure some results are returned if AI gives unexpected titles
     if (recommendedMovies.length < 5) {
-      const fallback = movies.filter(m => !viewingHistory.includes(m.title)).slice(0, 5 - recommendedMovies.length);
+      const fallback = allMovies.filter(m => !viewingHistory.includes(m.title)).slice(0, 5 - recommendedMovies.length);
       return [...recommendedMovies, ...fallback];
     }
     
     return recommendedMovies;
   } catch (error) {
     console.error('Error getting recommendations:', error);
-    // Return a generic list on error
-    return movies.slice(0, 5);
+    return [];
   }
 }
 
@@ -92,16 +96,25 @@ export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
         
         const newMovieData = {
           ...movieData,
-          rating: 0, // default rating
+          rating: 0, 
         };
 
         await moviesCollection.add(newMovieData);
         
-        revalidatePath('/'); // Revalidate home page to show new movie
+        revalidatePath('/'); 
         return { success: true, message: 'Movie saved successfully!' };
 
     } catch (error) {
         console.error('Error saving movie:', error);
+        
+        const permissionError = new FirestorePermissionError({
+            path: 'movies',
+            operation: 'create',
+            requestResourceData: movieData,
+        });
+
+        errorEmitter.emit('permission-error', permissionError);
+
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, message: `Failed to save movie: ${errorMessage}` };
     }

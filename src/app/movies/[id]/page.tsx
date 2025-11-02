@@ -1,12 +1,25 @@
-import { movies } from '@/lib/data';
+'use client';
+
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Star, Clock, Users } from 'lucide-react';
 import { VideoPlayer } from '@/components/movie/video-player';
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Movie } from '@/lib/types';
 
 export default function MovieDetailPage({ params }: { params: { id: string } }) {
-  const movie = movies.find((m) => m.id === params.id);
+  const firestore = useFirestore();
+  const movieRef = useMemoFirebase(() => {
+    if (!firestore || !params.id) return null;
+    return doc(firestore, 'movies', params.id);
+  }, [firestore, params.id]);
+  const { data: movie, isLoading } = useDoc<Movie>(movieRef);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   if (!movie) {
     notFound();
@@ -44,7 +57,7 @@ export default function MovieDetailPage({ params }: { params: { id: string } }) 
               {movie.title}
             </h1>
             <div className="flex flex-wrap items-center gap-2">
-              {movie.genre.map((g) => (
+              {movie.genre.map((g: string) => (
                 <Badge key={g} variant="secondary">
                   {g}
                 </Badge>
@@ -75,7 +88,7 @@ export default function MovieDetailPage({ params }: { params: { id: string } }) 
                 Cast
             </h2>
             <div className="mt-4 flex flex-wrap gap-4">
-                {movie.cast.map(actor => (
+                {movie.cast.map((actor: string) => (
                     <div key={actor} className="rounded-full bg-secondary px-4 py-2 text-secondary-foreground">
                         {actor}
                     </div>

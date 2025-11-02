@@ -1,30 +1,38 @@
 'use client';
 
 import { useWatchlist } from '@/contexts/watchlist-context';
-import { movies } from '@/lib/data';
 import { MovieCard } from '@/components/movie/movie-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ListVideo } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, documentId } from 'firebase/firestore';
+import type { Movie } from '@/lib/types';
 
 export default function WatchlistPage() {
   const { watchlist, isLoaded } = useWatchlist();
+  const firestore = useFirestore();
 
-  const watchlistMovies = movies.filter((movie) => watchlist.includes(movie.id));
+  const watchlistQuery = useMemoFirebase(() => {
+    if (!firestore || !isLoaded || watchlist.length === 0) return null;
+    return query(collection(firestore, 'movies'), where(documentId(), 'in', watchlist));
+  }, [firestore, watchlist, isLoaded]);
+
+  const { data: watchlistMovies, isLoading } = useCollection<Movie>(watchlistQuery);
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-6">
       <h1 className="mb-8 font-headline text-4xl font-bold tracking-tighter">
         My Watchlist
       </h1>
-      {!isLoaded ? (
+      {!isLoaded || (isLoading && watchlist.length > 0) ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="aspect-[2/3] w-full rounded-lg" />
           ))}
         </div>
-      ) : watchlistMovies.length > 0 ? (
+      ) : watchlistMovies && watchlistMovies.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {watchlistMovies.map((movie) => (
             <MovieCard key={movie.id} movie={movie} />

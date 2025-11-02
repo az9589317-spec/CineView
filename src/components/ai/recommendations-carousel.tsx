@@ -1,26 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { Movie } from '@/lib/types';
 import { getRecommendations } from '@/app/actions';
 import { MovieCarousel } from '../movie/movie-carousel';
 import { Skeleton } from '../ui/skeleton';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+
 
 export function RecommendationsCarousel() {
   const [recommendedMovies, setRecommendedMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const firestore = useFirestore();
+  const moviesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'movies');
+  }, [firestore]);
+  const { data: movies } = useCollection<Movie>(moviesQuery);
+
   useEffect(() => {
     async function fetchRecommendations() {
+      if (!movies || movies.length === 0) return;
       setIsLoading(true);
       // Hardcoded viewing history for demonstration purposes
-      const viewingHistory = 'Cosmic Odyssey, City of Shadows, Fist of the Dragon';
-      const movies = await getRecommendations(viewingHistory);
-      setRecommendedMovies(movies);
+      const viewingHistory = movies.slice(0,3).map(m => m.title).join(', ');
+      const recommended = await getRecommendations(viewingHistory);
+      setRecommendedMovies(recommended);
       setIsLoading(false);
     }
     fetchRecommendations();
-  }, []);
+  }, [movies]);
 
   if (isLoading) {
     return (

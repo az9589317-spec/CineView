@@ -2,7 +2,7 @@
 
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,24 +11,24 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Upload, CheckCircle, Video, Image as ImageIcon } from 'lucide-react';
-import { movies, genres } from '@/lib/data';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { uploadFile, saveMovie } from '../actions';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Movie } from '@/lib/types';
+
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
-
-const allGenres = genres.map(genre => ({ label: genre, value: genre }));
-const allCast = [...new Set(movies.flatMap(movie => movie.cast))].sort().map(actor => ({ label: actor, value: actor }));
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
   genres: z.array(z.string()).min(1, 'At least one genre is required'),
   cast: z.array(z.string()).min(1, 'At least one cast member is required'),
-  posterImage: z.instanceof(File).optional(),
-  videoFile: z.instanceof(File).optional(),
+  posterImage: z.instanceof(File).refine(file => file.size > 0, "Poster image is required.").optional(),
+  videoFile: z.instanceof(File).refine(file => file.size > 0, "Video file is required.").optional(),
 });
 
 type UploadFormValues = z.infer<typeof formSchema>;
@@ -43,6 +43,26 @@ export default function UploadPage() {
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
+  const firestore = useFirestore();
+  const moviesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'movies');
+  }, [firestore]);
+  const { data: movies } = useCollection<Movie>(moviesQuery);
+
+  const allGenres = useMemo(() => {
+    if (!movies) return [];
+    const genres = new Set(movies.flatMap(movie => movie.genre));
+    return Array.from(genres).sort().map(g => ({ label: g, value: g }));
+  }, [movies]);
+
+  const allCast = useMemo(() => {
+    if (!movies) return [];
+    const cast = new Set(movies.flatMap(movie => movie.cast));
+    return Array.from(cast).sort().map(c => ({ label: c, value: c }));
+  }, [movies]);
+
+
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,9 +72,10 @@ export default function UploadPage() {
       cast: [],
     },
   });
-
+  
   const posterFile = form.watch('posterImage');
   const videoFile = form.watch('videoFile');
+
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -235,7 +256,7 @@ export default function UploadPage() {
                     <FormField
                         control={form.control}
                         name="posterImage"
-                        render={({ field: { onChange, onBlur, name, ref } }) => (
+                        render={({ field: { onChange, onBlur, ref } }) => (
                         <FormItem className="flex-1">
                             <FormLabel className={posterUrl ? 'text-muted-foreground' : ''}>Poster Image</FormLabel>
                             <FormControl>
@@ -244,7 +265,6 @@ export default function UploadPage() {
                                 accept="image/*"
                                 onChange={(e) => onChange(e.target.files?.[0])}
                                 onBlur={onBlur}
-                                name={name}
                                 ref={ref}
                                 disabled={isFormDisabled || !!posterUrl}
                             />
@@ -270,7 +290,7 @@ export default function UploadPage() {
                     <FormField
                         control={form.control}
                         name="videoFile"
-                        render={({ field: { onChange, onBlur, name, ref } }) => (
+                        render={({ field: { onChange, onBlur, ref } }) => (
                         <FormItem className="flex-1">
                             <FormLabel className={videoUrl ? 'text-muted-foreground' : ''}>Video File</FormLabel>
                             <FormControl>
@@ -279,7 +299,6 @@ export default function UploadPage() {
                                 accept="video/*"
                                 onChange={(e) => onChange(e.target.files?.[0])}
                                 onBlur={onBlur}
-                                name={name}
                                 ref={ref}
                                 disabled={isFormDisabled || !!videoUrl}
                             />
