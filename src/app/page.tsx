@@ -1,18 +1,36 @@
+'use client';
+
 import { MovieCarousel } from '@/components/movie/movie-carousel';
 import { movies, genres } from '@/lib/data';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlayCircle } from 'lucide-react';
+import { PlayCircle, Upload } from 'lucide-react';
 import { RecommendationsCarousel } from '@/components/ai/recommendations-carousel';
+import { useUser } from '@/firebase/auth/use-user';
+import { cn } from '@/lib/utils';
+
+const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
 
 export default function Home() {
   const featuredMovie = movies[0];
   const trendingMovies = movies.slice(1, 7);
   const newReleases = movies.slice(7);
+  const { user } = useUser();
+  const isAdmin = user && user.email && adminEmails.includes(user.email);
 
   return (
     <div className="flex flex-col gap-8 md:gap-16">
+       {isAdmin && (
+        <div className="container mx-auto mt-4 flex justify-end">
+           <Button asChild>
+            <Link href="/upload" className={cn('flex items-center gap-2')}>
+              <Upload className="h-4 w-4" />
+              Upload Movie
+            </Link>
+          </Button>
+        </div>
+      )}
       <section className="relative h-[60vh] min-h-[400px] w-full">
         <Image
           src={featuredMovie.heroImageUrl}
