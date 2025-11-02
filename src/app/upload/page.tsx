@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser } from '@/firebase/auth/use-user';
@@ -10,13 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Upload, CheckCircle, Video, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Upload, CheckCircle, Video, Image as ImageIcon, Link2 } from 'lucide-react';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
@@ -27,7 +29,13 @@ const formSchema = z.object({
   genres: z.array(z.string()).min(1, 'At least one genre is required'),
   cast: z.array(z.string()).min(1, 'At least one cast member is required'),
   posterImage: z.instanceof(File).refine(file => file.size > 0, "Poster image is required.").optional(),
-  videoFile: z.instanceof(File).refine(file => file.size > 0, "Video file is required.").optional(),
+  videoFile: z.instanceof(File).optional(),
+  videoUrl: z.string().optional(),
+}).refine(data => {
+    return !!data.videoFile || !!data.videoUrl;
+}, {
+    message: "Either a video file or a video URL is required.",
+    path: ["videoFile"], // assign error to videoFile field
 });
 
 type UploadFormValues = z.infer<typeof formSchema>;
@@ -40,7 +48,8 @@ export default function UploadPage() {
   
   const [isUploading, setIsUploading] = useState<'poster' | 'video' | 'movie' | false>(false);
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoUploadUrl, setVideoUploadUrl] = useState<string | null>(null);
+  const [videoInputMethod, setVideoInputMethod] = useState<'upload' | 'url'>('upload');
 
   const firestore = useFirestore();
   const moviesQuery = useMemoFirebase(() => {
@@ -69,6 +78,7 @@ export default function UploadPage() {
       description: '',
       genres: [],
       cast: [],
+      videoUrl: '',
     },
   });
   
@@ -124,7 +134,7 @@ export default function UploadPage() {
       const result = await uploadResponse.json();
 
       if (type === 'poster') setPosterUrl(result.url);
-      if (type === 'video') setVideoUrl(result.url);
+      if (type === 'video') setVideoUploadUrl(result.url);
       
       toast({
         title: `${type.charAt(0).toUpperCase() + type.slice(1)} Upload Successful`,
@@ -144,11 +154,13 @@ export default function UploadPage() {
   };
 
   const onSaveMovie = async (values: UploadFormValues) => {
-    if (!posterUrl || !videoUrl || !firestore) {
+    const finalVideoUrl = videoInputMethod === 'upload' ? videoUploadUrl : values.videoUrl;
+
+    if (!posterUrl || !finalVideoUrl || !firestore) {
         toast({
             variant: 'destructive',
-            title: 'Missing files or connection',
-            description: 'Please upload both a poster and a video file, and ensure you are connected.',
+            title: 'Missing information',
+            description: 'Please provide a poster and a video source.',
         });
         return;
     }
@@ -168,7 +180,7 @@ export default function UploadPage() {
       heroImageUrl: posterUrl,
       cardImageHint: 'movie poster',
       heroImageHint: 'movie hero image',
-      videoUrl: videoUrl,
+      videoUrl: finalVideoUrl,
     };
 
     try {
@@ -181,7 +193,7 @@ export default function UploadPage() {
         });
         form.reset();
         setPosterUrl(null);
-        setVideoUrl(null);
+        setVideoUploadUrl(null);
     } catch (error) {
         console.error("Error saving movie:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -204,6 +216,7 @@ export default function UploadPage() {
   }
 
   const isFormDisabled = !!isUploading;
+  const finalVideoUrl = videoInputMethod === 'upload' ? videoUploadUrl : form.getValues('videoUrl');
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8 md:px-6">
@@ -314,41 +327,66 @@ export default function UploadPage() {
                  </div>
               </div>
 
-              <div className="space-y-4 rounded-lg border bg-card p-4">
-                <div className="flex items-center gap-4">
-                    {videoUrl ? (
-                      <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : (
-                      <Video className="h-6 w-6 text-muted-foreground" />
-                    )}
-                    <FormField
-                        control={form.control}
-                        name="videoFile"
-                        render={({ field: { onChange, onBlur, ref } }) => (
-                        <FormItem className="flex-1">
-                            <FormLabel className={videoUrl ? 'text-muted-foreground' : ''}>Video File</FormLabel>
-                            <FormControl>
-                            <Input
-                                type="file"
-                                accept="video/*"
-                                onChange={(e) => onChange(e.target.files?.[0])}
-                                onBlur={onBlur}
-                                ref={ref}
-                                disabled={isFormDisabled || !!videoUrl}
+               <Tabs value={videoInputMethod} onValueChange={(value) => setVideoInputMethod(value as 'upload' | 'url')}>
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="upload"><Upload className="mr-2 h-4 w-4" />Upload File</TabsTrigger>
+                    <TabsTrigger value="url"><Link2 className="mr-2 h-4 w-4" />From URL</TabsTrigger>
+                </TabsList>
+                <TabsContent value="upload">
+                    <div className="space-y-4 rounded-lg border bg-card p-4">
+                        <div className="flex items-center gap-4">
+                            {videoUploadUrl ? (
+                            <CheckCircle className="h-6 w-6 text-green-500" />
+                            ) : (
+                            <Video className="h-6 w-6 text-muted-foreground" />
+                            )}
+                            <FormField
+                                control={form.control}
+                                name="videoFile"
+                                render={({ field: { onChange, onBlur, ref } }) => (
+                                <FormItem className="flex-1">
+                                    <FormLabel className={videoUploadUrl ? 'text-muted-foreground' : ''}>Video File</FormLabel>
+                                    <FormControl>
+                                    <Input
+                                        type="file"
+                                        accept="video/*"
+                                        onChange={(e) => onChange(e.target.files?.[0])}
+                                        onBlur={onBlur}
+                                        ref={ref}
+                                        disabled={isFormDisabled || !!videoUploadUrl}
+                                    />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
                             />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <Button type="button" onClick={() => handleClientUpload(videoFile!, 'video')} disabled={!videoFile || !!videoUrl || isUploading === 'video'}>
-                        {isUploading === 'video' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                        Upload Video
-                    </Button>
-                </div>
-              </div>
+                            <Button type="button" onClick={() => handleClientUpload(videoFile!, 'video')} disabled={!videoFile || !!videoUploadUrl || isUploading === 'video'}>
+                                {isUploading === 'video' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                Upload Video
+                            </Button>
+                        </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="url">
+                    <div className="space-y-4 rounded-lg border bg-card p-4">
+                        <FormField
+                            control={form.control}
+                            name="videoUrl"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Video URL</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="https://example.com/video.mp4" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                    </div>
+                </TabsContent>
+              </Tabs>
               
-              <Button type="submit" disabled={isFormDisabled || !posterUrl || !videoUrl}>
+              <Button type="submit" disabled={isFormDisabled || !posterUrl || !finalVideoUrl}>
                 {isUploading === 'movie' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Movie
               </Button>
@@ -359,3 +397,5 @@ export default function UploadPage() {
     </div>
   );
 }
+
+    
