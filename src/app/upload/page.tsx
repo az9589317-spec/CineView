@@ -19,6 +19,7 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getGoogleDriveEmbedUrl } from '@/lib/google-drive';
 
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
@@ -154,7 +155,14 @@ export default function UploadPage() {
   };
 
   const onSaveMovie = async (values: UploadFormValues) => {
-    const finalVideoUrl = videoInputMethod === 'upload' ? videoUploadUrl : values.videoUrl;
+    let finalVideoUrl = videoInputMethod === 'upload' ? videoUploadUrl : values.videoUrl;
+
+    if (videoInputMethod === 'url' && finalVideoUrl) {
+      const googleDriveUrl = getGoogleDriveEmbedUrl(finalVideoUrl);
+      if (googleDriveUrl) {
+        finalVideoUrl = googleDriveUrl;
+      }
+    }
 
     if (!posterUrl || !finalVideoUrl || !firestore) {
         toast({
@@ -376,7 +384,7 @@ export default function UploadPage() {
                                 <FormItem>
                                 <FormLabel>Video URL</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="https://example.com/video.mp4" {...field} />
+                                    <Input placeholder="e.g., https://example.com/video.mp4 or a Google Drive link" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

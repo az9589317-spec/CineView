@@ -45,18 +45,30 @@ export default function WatchPage() {
   }
 
   const movie = movieDoc.data() as Movie;
+  const isGoogleDrive = movie.videoUrl?.includes('drive.google.com');
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <div className="flex flex-col gap-6">
         <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-2xl">
           {movie.videoUrl ? (
-             <video
-                src={movie.videoUrl}
-                controls
-                autoPlay
-                className="h-full w-full"
-             />
+            isGoogleDrive ? (
+                <iframe
+                    src={movie.videoUrl}
+                    title={movie.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="h-full w-full"
+                ></iframe>
+            ) : (
+                <video
+                    src={movie.videoUrl}
+                    controls
+                    autoPlay
+                    className="h-full w-full"
+                />
+            )
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
               Video not available.
