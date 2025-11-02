@@ -39,10 +39,18 @@ export function MovieCard({ movie }: MovieCardProps) {
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           className="transform object-cover transition-transform duration-300 group-hover:scale-105"
           data-ai-hint={movie.cardImageHint} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         
+        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/80 to-transparent">
+            <div className="p-4 text-white">
+                <h3 className="font-headline text-base font-bold text-foreground truncate">
+                    {movie.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">{movie.year}</p>
+            </div>
+        </div>
+
         <div
-          className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-black/50">
           <Button
             size="icon"
             className="h-14 w-14 rounded-full bg-accent/80 backdrop-blur-sm hover:bg-accent">
@@ -65,12 +73,6 @@ export function MovieCard({ movie }: MovieCardProps) {
           )}
         </div>
       </Link>
-      <div className="flex flex-col">
-        <h3 className="font-headline text-base font-bold text-foreground truncate">
-          {movie.title}
-        </h3>
-        <p className="text-sm text-muted-foreground">{movie.year}</p>
-      </div>
     </div>
   );
 }
