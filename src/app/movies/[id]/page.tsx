@@ -10,8 +10,9 @@ import type { Movie } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function MovieDetailPage({ params: { id } }: { params: { id: string } }) {
+export default function MovieDetailPage({ params }: { params: { id: string } }) {
   const firestore = useFirestore();
+  const { id } = params;
 
   const movieRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
