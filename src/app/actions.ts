@@ -5,10 +5,11 @@ import { recommendBasedOnHistory } from '@/ai/flows/recommendation-based-on-hist
 import { movies } from '@/lib/data';
 import type { Movie } from '@/lib/types';
 import ImageKit from 'imagekit';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, getFirestore } from 'firebase/firestore';
+import { addDoc, collection } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 import { revalidatePath } from 'next/cache';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
@@ -86,7 +87,19 @@ export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
           rating: 0, // default rating
         };
 
-        await addDocumentNonBlocking(moviesCollection, newMovieData);
+        await addDoc(moviesCollection, newMovieData).catch(error => {
+          errorEmitter.emit(
+            'permission-error',
+            new FirestorePermissionError({
+              path: moviesCollection.path,
+              operation: 'create',
+              requestResourceData: newMovieData,
+            })
+          );
+          // throw a new error to be caught by the outer try/catch
+          throw error;
+        });
+        
         revalidatePath('/'); // Revalidate home page to show new movie
         return { success: true, message: 'Movie saved successfully!' };
 
