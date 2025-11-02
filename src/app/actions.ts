@@ -10,9 +10,9 @@ import { collection, getFirestore } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 
 const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
+  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
+  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
 });
 
 export async function getRecommendations(viewingHistory: string): Promise<Movie[]> {
@@ -63,13 +63,13 @@ export async function uploadMovie(formData: FormData) {
     const videoFile = formData.get('videoFile') as File;
 
     if (!title || !description || !genres.length || !cast.length || !posterImage || !videoFile) {
-      throw new Error('Missing required fields');
+      return { success: false, message: 'Missing required fields' };
     }
 
     const posterImageBuffer = Buffer.from(await posterImage.arrayBuffer());
     const videoFileBuffer = Buffer.from(await videoFile.arrayBuffer());
 
-    const [posterUpload, videoUpload] = await Promise.all([
+    const [posterUploadResult, videoUploadResult] = await Promise.allSettled([
       imagekit.upload({
         file: posterImageBuffer,
         fileName: posterImage.name,
@@ -81,6 +81,16 @@ export async function uploadMovie(formData: FormData) {
         folder: '/movie-videos/',
       }),
     ]);
+
+    if (posterUploadResult.status === 'rejected') {
+      throw new Error(`Poster upload failed: ${posterUploadResult.reason.message}`);
+    }
+    if (videoUploadResult.status === 'rejected') {
+      throw new Error(`Video upload failed: ${videoUploadResult.reason.message}`);
+    }
+
+    const posterUpload = posterUploadResult.value;
+    const videoUpload = videoUploadResult.value;
 
     const newMovie = {
       title,
@@ -101,7 +111,7 @@ export async function uploadMovie(formData: FormData) {
     const moviesCollection = collection(firestore, 'movies');
     await addDocumentNonBlocking(moviesCollection, newMovie);
 
-    return { success: true, message: 'Movie uploaded successfully!', movie: newMovie };
+    return { success: true, message: 'Movie uploaded successfully!' };
   } catch (error) {
     console.error('Error uploading movie:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
