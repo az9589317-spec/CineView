@@ -73,7 +73,7 @@ export default function Home() {
   }, [featuredPool.length, currentIndex]);
 
 
-  if (isLoading) {
+  if (isLoading || !movies || movies.length === 0) {
     return (
       <div className="flex h-screen w-full flex-col">
         <Skeleton className="h-[60vh] w-full" />
@@ -104,7 +104,7 @@ export default function Home() {
         </div>
       )}
 
-      {movies && movies.length > 0 && featuredMovie ? (
+      {featuredMovie ? (
         <>
           <section className="relative h-[60vh] min-h-[400px] w-full mt-4 overflow-hidden">
             {previousMovie && (
