@@ -1,13 +1,14 @@
 'use client';
 
+import { use, useEffect } from 'react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { notFound } from 'next/navigation';
 import type { Movie } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { use } from 'react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PlayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -18,22 +19,47 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
     return doc(firestore, 'movies', id);
   }, [firestore, id]);
 
-  const { data: movie, isLoading } = useDoc<Movie>(movieRef);
+  const { data: movie, isLoading, error } = useDoc<Movie>(movieRef);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('=== Play Page Debug ===');
+    console.log('Movie ID:', id);
+    console.log('Firestore initialized:', !!firestore);
+    console.log('Is loading:', isLoading);
+    console.log('Movie data:', movie);
+    console.log('Error:', error);
+  }, [id, firestore, isLoading, movie, error]);
 
   if (isLoading) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-black p-4">
-        <Skeleton className="h-16 w-1/2" />
-        <Skeleton className="aspect-video w-full max-w-4xl" />
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-foreground/60">Loading video...</p>
+        <div className='w-full max-w-4xl mt-4'>
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="mt-4 aspect-video w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container flex min-h-screen flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold text-destructive">Error Loading Video</h1>
+        <p className="mt-4 text-foreground/60">{error.message}</p>
+        <Button asChild className="mt-6">
+          <Link href="/">Go Home</Link>
+        </Button>
       </div>
     );
   }
 
   if (!movie) {
-    if (!isLoading) {
-      notFound();
-    }
-    return null; // Return null while loading to prevent premature notFound call
+    console.log('Movie not found, calling notFound()');
+    notFound();
+    return null;
   }
 
   return (
