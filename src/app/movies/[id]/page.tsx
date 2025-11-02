@@ -11,10 +11,12 @@ import type { Movie } from '@/lib/types';
 
 export default function MovieDetailPage({ params }: { params: { id: string } }) {
   const firestore = useFirestore();
+  const { id } = params;
+
   const movieRef = useMemoFirebase(() => {
-    if (!firestore || !params.id) return null;
-    return doc(firestore, 'movies', params.id);
-  }, [firestore, params.id]);
+    if (!firestore || !id) return null;
+    return doc(firestore, 'movies', id);
+  }, [firestore, id]);
   const { data: movie, isLoading } = useDoc<Movie>(movieRef);
 
   if (isLoading) {
