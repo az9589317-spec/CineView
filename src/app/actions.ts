@@ -5,11 +5,9 @@ import { recommendBasedOnHistory } from '@/ai/flows/recommendation-based-on-hist
 import { movies } from '@/lib/data';
 import type { Movie } from '@/lib/types';
 import ImageKit from 'imagekit';
-import { addDoc, collection } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { initializeServerApp } from '@/firebase/server-init';
 import { revalidatePath } from 'next/cache';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
@@ -88,36 +86,22 @@ export async function uploadFile(formData: FormData, type: 'poster' | 'video') {
 
 export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
     try {
-        const { firestore } = initializeFirebase();
-        const moviesCollection = collection(firestore, 'movies');
+        await initializeServerApp();
+        const firestore = getAdminFirestore();
+        const moviesCollection = firestore.collection('movies');
         
         const newMovieData = {
           ...movieData,
           rating: 0, // default rating
         };
 
-        await addDoc(moviesCollection, newMovieData);
+        await moviesCollection.add(newMovieData);
         
         revalidatePath('/'); // Revalidate home page to show new movie
         return { success: true, message: 'Movie saved successfully!' };
 
     } catch (error) {
         console.error('Error saving movie:', error);
-        
-        // This is a Firestore permission error, let's format it for the emitter
-        if (error instanceof Error && (error.message.includes('permission-denied') || error.message.includes('insufficient permissions'))) {
-             const { firestore } = initializeFirebase();
-             const moviesCollection = collection(firestore, 'movies');
-             errorEmitter.emit(
-                'permission-error',
-                new FirestorePermissionError({
-                  path: moviesCollection.path,
-                  operation: 'create',
-                  requestResourceData: movieData,
-                })
-              );
-        }
-        
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, message: `Failed to save movie: ${errorMessage}` };
     }
