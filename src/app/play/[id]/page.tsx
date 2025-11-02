@@ -7,8 +7,10 @@ import type { Movie } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { use } from 'react';
 
-export default function PlayPage({ params: { id } }: { params: { id: string } }) {
+export default function PlayPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const firestore = useFirestore();
 
   const movieRef = useMemoFirebase(() => {
