@@ -15,7 +15,7 @@ const imagekit = new ImageKit({
 
 export async function getRecommendations(viewingHistory: string): Promise<Movie[]> {
   try {
-    const { firestore } = await initializeServerApp();
+    const { firestore } = initializeServerApp();
     const moviesSnapshot = await firestore.collection('movies').get();
     const allMovies = moviesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Movie[];
 
@@ -86,7 +86,7 @@ export async function uploadFile(formData: FormData, type: 'poster' | 'video') {
 
 export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
     try {
-        const { firestore } = await initializeServerApp();
+        const { firestore } = initializeServerApp();
         const moviesCollection = firestore.collection('movies');
         
         const newMovieData = {
