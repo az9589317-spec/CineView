@@ -47,6 +47,12 @@ export default function Home() {
   const featuredMovie = featuredPool[currentIndex];
   const previousMovie = previousIndex !== null ? featuredPool[previousIndex] : null;
 
+  const genres = useMemo(() => {
+    if (!movies) return [];
+    const allGenres = new Set(movies.flatMap(movie => movie.genre));
+    return Array.from(allGenres).sort();
+  }, [movies]);
+
   useEffect(() => {
     if (featuredPool.length > 1) {
       const interval = setInterval(() => {
