@@ -79,20 +79,35 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
     const [selectedValues, setSelectedValues] =
       React.useState<string[]>(defaultValue);
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
+    const [inputValue, setInputValue] = React.useState("");
+    const [currentOptions, setCurrentOptions] = React.useState(options);
+
+     React.useEffect(() => {
+      setCurrentOptions(options);
+    }, [options]);
 
     React.useEffect(() => {
       setSelectedValues(defaultValue);
     }, [defaultValue]);
 
     const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter") {
-        setIsPopoverOpen(true);
-      } else if (event.key === "Backspace" && !event.currentTarget.value) {
-        const newSelectedValues = [...selectedValues];
-        newSelectedValues.pop();
-        setSelectedValues(newSelectedValues);
-        onValueChange(newSelectedValues);
-      }
+        if (event.key === "Enter") {
+            if (inputValue.trim()) {
+                const newValue = inputValue.trim();
+                if (!currentOptions.some(o => o.value.toLowerCase() === newValue.toLowerCase()) && !selectedValues.includes(newValue)) {
+                    const newOption = { label: newValue, value: newValue };
+                    setCurrentOptions(prev => [...prev, newOption]);
+                    toggleOption(newValue);
+                }
+                setInputValue("");
+                event.preventDefault();
+            }
+        } else if (event.key === "Backspace" && !inputValue) {
+            const newSelectedValues = [...selectedValues];
+            newSelectedValues.pop();
+            setSelectedValues(newSelectedValues);
+            onValueChange(newSelectedValues);
+        }
     };
 
     const toggleOption = (value: string) => {
@@ -102,6 +117,11 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
       setSelectedValues(newSelectedValues);
       onValueChange(newSelectedValues);
     };
+
+    const handleClear = () => {
+        setSelectedValues([]);
+        onValueChange([]);
+    }
 
     return (
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -121,7 +141,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                 <div className="flex justify-between items-center w-full">
                   <div className="flex flex-wrap items-center">
                     {selectedValues.slice(0, maxCount).map((value) => {
-                      const option = options.find((o) => o.value === value);
+                      const option = currentOptions.find((o) => o.value === value);
                       const Icon = option?.icon;
                       return (
                         <Badge
@@ -152,8 +172,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                           className="ml-2 h-4 w-4 cursor-pointer"
                           onClick={(event) => {
                             event.stopPropagation();
-                            setSelectedValues([]);
-                            onValue-change([]);
+                            handleClear();
                           }}
                         />
                       </Badge>
@@ -175,8 +194,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                       className="h-4 w-4 cursor-pointer"
                       onClick={(event) => {
                         event.stopPropagation();
-                        setSelectedValues([]);
-                        onValueChange([]);
+                        handleClear();
                       }}
                     />
                   </div>
@@ -195,13 +213,17 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
         <PopoverContent className="w-full p-0">
           <Command>
             <CommandInput
-              placeholder="Search..."
+              placeholder="Search or create..."
+              value={inputValue}
+              onValueChange={setInputValue}
               onKeyDown={handleInputKeyDown}
             />
             <CommandList>
-              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandEmpty>
+                {`No results found. Press "Enter" to add "${inputValue}"`}
+              </CommandEmpty>
               <CommandGroup>
-                {options.map((option) => {
+                {currentOptions.map((option) => {
                   const isSelected = selectedValues.includes(option.value);
                   return (
                     <CommandItem
@@ -228,10 +250,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                   {selectedValues.length > 0 && (
                     <>
                       <CommandItem
-                        onSelect={() => {
-                          setSelectedValues([]);
-                          onValueChange([]);
-                        }}
+                        onSelect={handleClear}
                         className="flex-1 justify-center cursor-pointer"
                       >
                         Clear
