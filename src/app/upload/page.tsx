@@ -302,18 +302,21 @@ export default function UploadPage() {
               </fieldset>
 
               <div className="space-y-4 rounded-lg border bg-card p-4">
-                 <div className="flex items-center gap-4">
-                    {posterUrl ? (
-                      <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : (
-                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                 <div className="flex flex-col items-stretch gap-4 md:flex-row md:items-center">
+                    {posterUrl && (
+                      <CheckCircle className="hidden h-6 w-6 text-green-500 md:block" />
                     )}
                     <FormField
                         control={form.control}
                         name="posterImage"
                         render={({ field: { onChange, onBlur, ref } }) => (
                         <FormItem className="flex-1">
-                            <FormLabel className={posterUrl ? 'text-muted-foreground' : ''}>Poster Image</FormLabel>
+                            <FormLabel className={posterUrl ? 'text-muted-foreground' : ''}>
+                              <div className="flex items-center gap-2">
+                                {posterUrl && <CheckCircle className="h-4 w-4 text-green-500 md:hidden"/>}
+                                <span>Poster Image</span>
+                              </div>
+                            </FormLabel>
                             <FormControl>
                             <Input
                                 type="file"
@@ -328,7 +331,7 @@ export default function UploadPage() {
                         </FormItem>
                         )}
                     />
-                    <Button type="button" onClick={() => handleClientUpload(posterFile!, 'poster')} disabled={!posterFile || !!posterUrl || isUploading === 'poster'}>
+                    <Button type="button" onClick={() => handleClientUpload(posterFile!, 'poster')} disabled={!posterFile || !!posterUrl || isUploading === 'poster'} className="w-full md:w-auto">
                         {isUploading === 'poster' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                         Upload Poster
                     </Button>
@@ -342,18 +345,21 @@ export default function UploadPage() {
                 </TabsList>
                 <TabsContent value="upload">
                     <div className="space-y-4 rounded-lg border bg-card p-4">
-                        <div className="flex items-center gap-4">
-                            {videoUploadUrl ? (
-                            <CheckCircle className="h-6 w-6 text-green-500" />
-                            ) : (
-                            <Video className="h-6 w-6 text-muted-foreground" />
+                        <div className="flex flex-col items-stretch gap-4 md:flex-row md:items-center">
+                            {videoUploadUrl && (
+                              <CheckCircle className="hidden h-6 w-6 text-green-500 md:block" />
                             )}
                             <FormField
                                 control={form.control}
                                 name="videoFile"
                                 render={({ field: { onChange, onBlur, ref } }) => (
                                 <FormItem className="flex-1">
-                                    <FormLabel className={videoUploadUrl ? 'text-muted-foreground' : ''}>Video File</FormLabel>
+                                    <FormLabel className={videoUploadUrl ? 'text-muted-foreground' : ''}>
+                                      <div className="flex items-center gap-2">
+                                        {videoUploadUrl && <CheckCircle className="h-4 w-4 text-green-500 md:hidden"/>}
+                                        <span>Video File</span>
+                                      </div>
+                                    </FormLabel>
                                     <FormControl>
                                     <Input
                                         type="file"
@@ -368,7 +374,7 @@ export default function UploadPage() {
                                 </FormItem>
                                 )}
                             />
-                            <Button type="button" onClick={() => handleClientUpload(videoFile!, 'video')} disabled={!videoFile || !!videoUploadUrl || isUploading === 'video'}>
+                            <Button type="button" onClick={() => handleClientUpload(videoFile!, 'video')} disabled={!videoFile || !!videoUploadUrl || isUploading === 'video'} className="w-full md:w-auto">
                                 {isUploading === 'video' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                 Upload Video
                             </Button>
@@ -394,7 +400,7 @@ export default function UploadPage() {
                 </TabsContent>
               </Tabs>
               
-              <Button type="submit" disabled={isFormDisabled || !posterUrl || !finalVideoUrl}>
+              <Button type="submit" disabled={isFormDisabled || !posterUrl || !finalVideoUrl} className="w-full">
                 {isUploading === 'movie' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Movie
               </Button>
@@ -405,5 +411,3 @@ export default function UploadPage() {
     </div>
   );
 }
-
-    
