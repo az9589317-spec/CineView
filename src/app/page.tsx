@@ -38,10 +38,10 @@ export default function Home() {
   
   const featuredPool = useMemo(() => {
       const pool = [...trendingMovies, ...newReleases];
-      // remove duplicates
+      // remove duplicates and limit to 5
       return pool.filter((movie, index, self) => 
         index === self.findIndex((m) => m.id === movie.id)
-      );
+      ).slice(0, 5);
   }, [trendingMovies, newReleases]);
 
 
@@ -51,7 +51,7 @@ export default function Home() {
 
       const interval = setInterval(() => {
         setFeaturedMovieIndex((prevIndex) => (prevIndex + 1) % featuredPool.length);
-      }, 7000); // Change movie every 7 seconds
+      }, 3000); // Change movie every 3 seconds
 
       return () => clearInterval(interval);
     }
