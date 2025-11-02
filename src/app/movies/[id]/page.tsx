@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { use, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWatchlist } from '@/contexts/watchlist-context';
+import { VideoPlayer } from '@/components/movie/video-player';
 
 export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -157,12 +158,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
             </p>
 
             <div className="mt-4 flex flex-wrap gap-4">
-              <Button size="lg" asChild className="bg-accent hover:bg-accent/80">
-                <Link href={`/play/${movie.id}`}>
-                  <PlayCircle />
-                  Play
-                </Link>
-              </Button>
+              <VideoPlayer movie={movie} />
                <Button size="lg" variant="outline" onClick={handleWatchlistClick} disabled={!isLoaded}>
                  {onWatchlist ? <Check /> : <Bookmark />}
                  {onWatchlist ? 'On Watchlist' : 'Add to Watchlist'}
