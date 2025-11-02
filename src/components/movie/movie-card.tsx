@@ -86,10 +86,7 @@ export function MovieCard({ movie }: MovieCardProps) {
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // In a real app, you would navigate to an edit page
-    // For now, we'll just log it.
-    // router.push(`/admin/edit/${movie.id}`);
-    toast({ title: 'Edit Clicked', description: `Ready to edit "${movie.title}".` });
+    router.push(`/edit/${movie.id}`);
   };
   
   const stopPropagation = (e: React.MouseEvent | React.TouchEvent) => {
@@ -100,36 +97,37 @@ export function MovieCard({ movie }: MovieCardProps) {
 
   return (
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-      <div className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl aspect-[2/3]">
+      <div className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl">
         <Link href={`/watch/${movie.id}`} className="block h-full w-full">
-            <Image
-              src={movie.thumbnailUrl}
-              alt={`Poster for ${movie.title}`}
-              fill
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              className="transform object-cover transition-transform duration-300 group-hover:scale-105"
-              data-ai-hint={movie.cardImageHint} />
-            
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
-              <div className="absolute bottom-4 left-4 right-4">
-                <h3 className="font-headline text-base font-bold text-white truncate">
-                    {movie.title}
-                </h3>
-                <p className="text-sm text-white/70">{movie.year}</p>
-              </div>
+            <div className="aspect-[2/3] w-full">
+                <Image
+                src={movie.thumbnailUrl}
+                alt={`Poster for ${movie.title}`}
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                className="transform object-cover transition-transform duration-300 group-hover:scale-105"
+                data-ai-hint={movie.cardImageHint} />
             </div>
-
+            
             <div
               className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-black/50">
               <Button
                 size="icon"
                 className="h-14 w-14 rounded-full bg-accent/80 backdrop-blur-sm hover:bg-accent"
-                // No asChild needed here, the parent Link handles navigation
+                asChild
                 >
                 <PlayCircle className="h-8 w-8" />
               </Button>
             </div>
         </Link>
+        
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-8 text-white">
+            <h3 className="font-headline text-base font-bold truncate">
+                {movie.title}
+            </h3>
+            <p className="text-sm text-white/70">{movie.year}</p>
+        </div>
+
 
           <div className="absolute right-2 top-2" onClick={stopPropagation} onTouchStart={stopPropagation}>
             {isAdmin ? (
