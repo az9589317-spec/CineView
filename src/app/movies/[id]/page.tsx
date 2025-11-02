@@ -13,7 +13,7 @@ import { use } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWatchlist } from '@/contexts/watchlist-context';
 
-export default function MovieDetailPage({ params }: { params: { id: string } }) {
+export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const firestore = useFirestore();
   const { isInWatchlist, addToWatchlist, removeFromWatchlist, isLoaded } = useWatchlist();
