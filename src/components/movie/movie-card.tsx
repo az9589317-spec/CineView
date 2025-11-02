@@ -27,7 +27,7 @@ export function MovieCard({ movie }: MovieCardProps) {
   };
 
   return (
-    <Link href={`/play/${movie.id}`} className="group relative block w-full overflow-hidden rounded-lg">
+    <Link href={`/movies/${movie.id}`} className="group relative block w-full overflow-hidden rounded-lg">
       <Image
         src={movie.thumbnailUrl}
         alt={`Poster for ${movie.title}`}
