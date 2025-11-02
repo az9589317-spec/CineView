@@ -10,6 +10,7 @@ import type { Movie } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { use } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MovieDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -23,7 +24,37 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   const { data: movie, isLoading } = useDoc<Movie>(movieRef);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+        <div className="flex flex-col">
+          <Skeleton className="h-[50vh] w-full" />
+          <div className="container -mt-32 w-full max-w-5xl">
+            <div className="relative z-10 flex flex-col gap-8 md:flex-row">
+              <Skeleton className="h-[360px] w-full flex-shrink-0 md:w-64" />
+              <div className="flex flex-col gap-4 pt-8 text-white">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-12 w-3/4" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-24 w-full max-w-prose" />
+                <div className="mt-4">
+                  <Skeleton className="h-12 w-32" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-12">
+              <Skeleton className="h-8 w-32" />
+              <div className="mt-4 flex flex-wrap gap-4">
+                <Skeleton className="h-10 w-24 rounded-full" />
+                <Skeleton className="h-10 w-32 rounded-full" />
+                <Skeleton className="h-10 w-28 rounded-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
   }
 
   if (!movie) {
