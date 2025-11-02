@@ -80,11 +80,6 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
       React.useState<string[]>(defaultValue);
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [inputValue, setInputValue] = React.useState("");
-    const [currentOptions, setCurrentOptions] = React.useState(options);
-
-     React.useEffect(() => {
-      setCurrentOptions(options);
-    }, [options]);
 
     React.useEffect(() => {
       setSelectedValues(defaultValue);
@@ -94,10 +89,10 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
         if (event.key === "Enter") {
             if (inputValue.trim()) {
                 const newValue = inputValue.trim();
-                if (!currentOptions.some(o => o.value.toLowerCase() === newValue.toLowerCase()) && !selectedValues.includes(newValue)) {
-                    const newOption = { label: newValue, value: newValue };
-                    setCurrentOptions(prev => [...prev, newOption]);
-                    toggleOption(newValue);
+                if (!options.some(o => o.value.toLowerCase() === newValue.toLowerCase()) && !selectedValues.includes(newValue)) {
+                    const newSelectedValues = [...selectedValues, newValue];
+                    setSelectedValues(newSelectedValues);
+                    onValueChange(newSelectedValues);
                 }
                 setInputValue("");
                 event.preventDefault();
@@ -123,6 +118,18 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
         onValueChange([]);
     }
 
+    const displayedOptions = React.useMemo(() => {
+      const selectedSet = new Set(selectedValues);
+      const combined = [
+        ...options,
+        ...selectedValues
+          .filter(v => !options.some(o => o.value === v))
+          .map(v => ({ label: v, value: v }))
+      ];
+      return Array.from(new Set(combined.map(o => o.value))).map(v => combined.find(o => o.value === v)!);
+    }, [options, selectedValues]);
+
+
     return (
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
         <PopoverTrigger asChild>
@@ -141,7 +148,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                 <div className="flex justify-between items-center w-full">
                   <div className="flex flex-wrap items-center">
                     {selectedValues.slice(0, maxCount).map((value) => {
-                      const option = currentOptions.find((o) => o.value === value);
+                      const option = displayedOptions.find((o) => o.value === value);
                       const Icon = option?.icon;
                       return (
                         <Badge
@@ -223,7 +230,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                 {`No results found. Press "Enter" to add "${inputValue}"`}
               </CommandEmpty>
               <CommandGroup>
-                {currentOptions.map((option) => {
+                {displayedOptions.map((option) => {
                   const isSelected = selectedValues.includes(option.value);
                   return (
                     <CommandItem
