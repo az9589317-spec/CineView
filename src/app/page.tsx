@@ -1,3 +1,4 @@
+
 'use client';
 
 import { MovieCarousel } from '@/components/movie/movie-carousel';
@@ -11,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VideoPlayer } from '@/components/movie/video-player';
 
@@ -29,9 +30,39 @@ export default function Home() {
 
   const { data: movies, isLoading } = useCollection<Movie>(moviesQuery);
 
-  const featuredMovie = useMemo(() => movies?.[0], [movies]);
-  const trendingMovies = useMemo(() => movies?.slice(1, 7) || [], [movies]);
-  const newReleases = useMemo(() => movies?.slice(7) || [], [movies]);
+  const [featuredMovie, setFeaturedMovie] = useState<Movie | undefined>(undefined);
+  const [featuredMovieIndex, setFeaturedMovieIndex] = useState(0);
+
+  const trendingMovies = useMemo(() => movies?.slice(0, 7) || [], [movies]);
+  const newReleases = useMemo(() => movies?.slice(7, 14) || [], [movies]);
+  
+  const featuredPool = useMemo(() => {
+      const pool = [...trendingMovies, ...newReleases];
+      // remove duplicates
+      return pool.filter((movie, index, self) => 
+        index === self.findIndex((m) => m.id === movie.id)
+      );
+  }, [trendingMovies, newReleases]);
+
+
+  useEffect(() => {
+    if (featuredPool.length > 0) {
+      setFeaturedMovie(featuredPool[featuredMovieIndex]);
+
+      const interval = setInterval(() => {
+        setFeaturedMovieIndex((prevIndex) => (prevIndex + 1) % featuredPool.length);
+      }, 7000); // Change movie every 7 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [featuredPool, featuredMovieIndex]);
+
+  useEffect(() => {
+    if (featuredPool.length > 0) {
+        setFeaturedMovie(featuredPool[featuredMovieIndex]);
+    }
+  }, [featuredMovieIndex, featuredPool]);
+
 
   const genres = useMemo(() => {
     if (!movies) return [];
@@ -74,11 +105,12 @@ export default function Home() {
         <>
           <section className="relative h-[60vh] min-h-[400px] w-full mt-4">
             <Image
+              key={featuredMovie.id}
               src={featuredMovie.heroImageUrl}
               alt={`Hero image for ${featuredMovie.title}`}
               fill
               priority
-              className="object-cover"
+              className="object-cover animate-fade-in"
               data-ai-hint={featuredMovie.heroImageHint}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
