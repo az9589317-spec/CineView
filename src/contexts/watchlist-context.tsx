@@ -56,11 +56,11 @@ export const WatchlistProvider = ({ children }: { children: ReactNode }) => {
         if (prev.includes(movieId)) {
           return prev;
         }
-        toast({
+        return [...prev, movieId];
+      });
+      toast({
           title: 'Added to Watchlist',
           description: `"${movieTitle}" has been added to your watchlist.`,
-        });
-        return [...prev, movieId];
       });
     },
     [isLoaded, toast]
@@ -73,12 +73,12 @@ export const WatchlistProvider = ({ children }: { children: ReactNode }) => {
         if (!prev.includes(movieId)) {
           return prev;
         }
-        toast({
+        return prev.filter((id) => id !== movieId);
+      });
+       toast({
           title: 'Removed from Watchlist',
           description: `"${movieTitle}" has been removed from your watchlist.`,
         });
-        return prev.filter((id) => id !== movieId);
-      });
     },
     [isLoaded, toast]
   );
