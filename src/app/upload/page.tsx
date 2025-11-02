@@ -17,7 +17,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
-import { revalidatePath } from 'next/cache';
 
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
@@ -183,8 +182,6 @@ export default function UploadPage() {
         form.reset();
         setPosterUrl(null);
         setVideoUrl(null);
-        // Manually trigger revalidation if needed, though useCollection should update
-        // revalidatePath('/'); 
     } catch (error) {
         console.error("Error saving movie:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
