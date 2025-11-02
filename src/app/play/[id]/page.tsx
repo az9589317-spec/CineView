@@ -20,7 +20,7 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
 
   const { data: movie, isLoading } = useDoc<Movie>(movieRef);
 
-  if (isLoading || !movie) {
+  if (isLoading) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-black p-4">
         <Skeleton className="h-16 w-1/2" />
@@ -29,8 +29,11 @@ export default function PlayPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  if (!movie && !isLoading) {
-    notFound();
+  if (!movie) {
+    if (!isLoading) {
+      notFound();
+    }
+    return null; // Return null while loading to prevent premature notFound call
   }
 
   return (

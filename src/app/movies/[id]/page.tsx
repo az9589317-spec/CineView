@@ -58,7 +58,10 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   if (!movie) {
-    notFound();
+    if (!isLoading) {
+      notFound();
+    }
+    return null; // Return null while loading to prevent premature notFound call
   }
 
   return (
