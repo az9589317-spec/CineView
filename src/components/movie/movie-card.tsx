@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -91,7 +92,7 @@ export function MovieCard({ movie }: MovieCardProps) {
     toast({ title: 'Edit Clicked', description: `Ready to edit "${movie.title}".` });
   };
   
-  const stopPropagation = (e: React.MouseEvent) => {
+  const stopPropagation = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
   };
@@ -99,9 +100,8 @@ export function MovieCard({ movie }: MovieCardProps) {
 
   return (
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-      <div className="flex flex-col gap-2">
-        <div className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl aspect-[2/3]">
-          <Link href={`/watch/${movie.id}`} className="block h-full w-full">
+      <div className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl aspect-[2/3]">
+        <Link href={`/watch/${movie.id}`} className="block h-full w-full">
             <Image
               src={movie.thumbnailUrl}
               alt={`Poster for ${movie.title}`}
@@ -110,26 +110,28 @@ export function MovieCard({ movie }: MovieCardProps) {
               className="transform object-cover transition-transform duration-300 group-hover:scale-105"
               data-ai-hint={movie.cardImageHint} />
             
-            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
-                <div className="p-4 text-white">
-                    {/* This div is now a spacer */}
-                </div>
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
+              <div className="absolute bottom-4 left-4 right-4">
+                <h3 className="font-headline text-base font-bold text-white truncate">
+                    {movie.title}
+                </h3>
+                <p className="text-sm text-white/70">{movie.year}</p>
+              </div>
             </div>
 
             <div
               className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-black/50">
               <Button
-                asChild
                 size="icon"
-                className="h-14 w-14 rounded-full bg-accent/80 backdrop-blur-sm hover:bg-accent">
-                  <Link href={`/watch/${movie.id}`}>
-                    <PlayCircle className="h-8 w-8" />
-                  </Link>
+                className="h-14 w-14 rounded-full bg-accent/80 backdrop-blur-sm hover:bg-accent"
+                // No asChild needed here, the parent Link handles navigation
+                >
+                <PlayCircle className="h-8 w-8" />
               </Button>
             </div>
-          </Link>
+        </Link>
 
-          <div className="absolute right-2 top-2" onClick={stopPropagation}>
+          <div className="absolute right-2 top-2" onClick={stopPropagation} onTouchStart={stopPropagation}>
             {isAdmin ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -167,13 +169,6 @@ export function MovieCard({ movie }: MovieCardProps) {
               )
             )}
           </div>
-        </div>
-         <div className="px-1">
-            <h3 className="font-headline text-base font-bold text-foreground truncate">
-                {movie.title}
-            </h3>
-            <p className="text-sm text-muted-foreground">{movie.year}</p>
-        </div>
       </div>
       <AlertDialogContent>
         <AlertDialogHeader>
