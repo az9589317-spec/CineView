@@ -9,13 +9,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload } from 'lucide-react';
+import { movies, genres } from '@/lib/data';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
+
+const allGenres = genres.map(genre => ({ label: genre, value: genre }));
+const allCast = [...new Set(movies.flatMap(movie => movie.cast))].sort().map(actor => ({ label: actor, value: actor }));
 
 export default function UploadPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedCast, setSelectedCast] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -55,12 +62,24 @@ export default function UploadPage() {
               <Textarea id="description" placeholder="Movie Description" />
             </div>
             <div>
-              <Label htmlFor="genre">Genre</Label>
-              <Input id="genre" placeholder="e.g., Sci-Fi, Adventure" />
+              <Label>Genre</Label>
+              <MultiSelect
+                options={allGenres}
+                onValueChange={setSelectedGenres}
+                defaultValue={selectedGenres}
+                placeholder="Select genres"
+                variant="secondary"
+              />
             </div>
             <div>
-              <Label htmlFor="cast">Cast</Label>
-              <Input id="cast" placeholder="e.g., Dr. Aris Thorne, Captain Eva Rostova" />
+              <Label>Cast</Label>
+               <MultiSelect
+                options={allCast}
+                onValueChange={setSelectedCast}
+                defaultValue={selectedCast}
+                placeholder="Select cast members"
+                variant="secondary"
+              />
             </div>
             <div>
               <Label htmlFor="image">Poster Image</Label>
