@@ -103,14 +103,14 @@ export default function Home() {
 
       {movies && movies.length > 0 && featuredMovie ? (
         <>
-          <section className="relative h-[60vh] min-h-[400px] w-full mt-4">
+          <section className="relative h-[60vh] min-h-[400px] w-full mt-4 overflow-hidden">
             <Image
               key={featuredMovie.id}
               src={featuredMovie.heroImageUrl}
               alt={`Hero image for ${featuredMovie.title}`}
               fill
               priority
-              className="object-cover animate-fade-in"
+              className="object-cover animate-slide-in-from-right"
               data-ai-hint={featuredMovie.heroImageHint}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
