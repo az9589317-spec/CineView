@@ -2,15 +2,13 @@
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { notFound, useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import type { Movie } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function PlayPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default function PlayPage({ params: { id } }: { params: { id: string } }) {
   const firestore = useFirestore();
 
   const movieRef = useMemoFirebase(() => {

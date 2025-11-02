@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { notFound, useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Star, Clock, Users, PlayCircle } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -10,9 +10,8 @@ import type { Movie } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function MovieDetailPage({ params }: { params: { id: string } }) {
+export default function MovieDetailPage({ params: { id } }: { params: { id: string } }) {
   const firestore = useFirestore();
-  const { id } = params;
 
   const movieRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
