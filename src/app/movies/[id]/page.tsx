@@ -9,7 +9,7 @@ import { doc } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { use } from 'react';
+import { use, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWatchlist } from '@/contexts/watchlist-context';
 
@@ -23,8 +23,19 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     return doc(firestore, 'movies', id);
   }, [firestore, id]);
 
-  const { data: movie, isLoading } = useDoc<Movie>(movieRef);
+  const { data: movie, isLoading, error } = useDoc<Movie>(movieRef);
   const onWatchlist = movie ? isInWatchlist(movie.id) : false;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('=== Movie Detail Debug ===');
+    console.log('Movie ID:', id);
+    console.log('Firestore initialized:', !!firestore);
+    console.log('Movie ref:', movieRef);
+    console.log('Is loading:', isLoading);
+    console.log('Movie data:', movie);
+    console.log('Error:', error);
+  }, [id, firestore, movieRef, isLoading, movie, error]);
 
   const handleWatchlistClick = () => {
     if (!movie) return;
@@ -35,50 +46,57 @@ export default function MovieDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  // Show loading skeleton
   if (isLoading) {
     return (
-        <div className="flex flex-col">
-          <Skeleton className="h-[50vh] w-full" />
-          <div className="container -mt-32 w-full max-w-5xl">
-            <div className="relative z-10 flex flex-col gap-8 md:flex-row">
-              <Skeleton className="h-[360px] w-full flex-shrink-0 rounded-lg md:w-64" />
-              <div className="flex w-full flex-col gap-4 pt-8 text-white">
-                <Skeleton className="h-12 w-3/4" />
-                <div className="flex items-center gap-4">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-5 w-20" />
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Skeleton className="h-6 w-16" />
-                  <Skeleton className="h-6 w-20" />
-                </div>
-                <Skeleton className="h-24 w-full max-w-prose" />
-                <div className="mt-4 flex gap-4">
-                  <Skeleton className="h-12 w-32" />
-                  <Skeleton className="h-12 w-32" />
-                </div>
+      <div className="flex flex-col">
+        <Skeleton className="h-[50vh] w-full" />
+        <div className="container -mt-32 w-full max-w-5xl">
+          <div className="relative z-10 flex flex-col gap-8 md:flex-row">
+            <Skeleton className="h-[360px] w-full flex-shrink-0 rounded-lg md:w-64" />
+            <div className="flex w-full flex-col gap-4 pt-8 text-white">
+              <Skeleton className="h-12 w-3/4" />
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-20" />
               </div>
-            </div>
-            <div className="mt-12">
-              <Skeleton className="h-8 w-32" />
-              <div className="mt-4 flex flex-wrap gap-4">
-                <Skeleton className="h-10 w-24 rounded-full" />
-                <Skeleton className="h-10 w-32 rounded-full" />
-                <Skeleton className="h-10 w-28 rounded-full" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-6 w-20" />
+              </div>
+              <Skeleton className="h-24 w-full max-w-prose" />
+              <div className="mt-4 flex gap-4">
+                <Skeleton className="h-12 w-32" />
+                <Skeleton className="h-12 w-32" />
               </div>
             </div>
           </div>
         </div>
-      );
+      </div>
+    );
   }
 
+  // Show error message if there's an error
+  if (error) {
+    return (
+      <div className="container flex min-h-[50vh] flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold text-destructive">Error Loading Movie</h1>
+        <p className="mt-4 text-foreground/60">{error.message}</p>
+        <Button asChild className="mt-6">
+          <Link href="/">Go Home</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // If not loading and no movie data, show 404
   if (!movie) {
-    if (!isLoading) {
-      notFound();
-    }
+    console.log('Movie not found, calling notFound()');
+    notFound();
     return null;
   }
+
 
   return (
     <div className="flex flex-col pb-12">
