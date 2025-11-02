@@ -41,9 +41,9 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full flex-col gap-8 p-4 md:gap-16 md:p-8 lg:p-12">
+      <div className="flex h-screen w-full flex-col">
         <Skeleton className="h-[60vh] w-full" />
-        <div className="container mx-auto space-y-8">
+        <div className="container mx-auto space-y-8 py-8">
           <Skeleton className="h-8 w-48" />
           <div className="flex space-x-4">
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="aspect-[2/3] w-1/5" />)}
@@ -58,7 +58,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col gap-8 md:gap-16">
+    <div className="flex flex-col">
        {isAdmin && (
         <div className="container mx-auto mt-4 flex justify-end">
            <Button asChild>
@@ -72,7 +72,7 @@ export default function Home() {
 
       {movies && movies.length > 0 && featuredMovie ? (
         <>
-          <section className="relative h-[60vh] min-h-[400px] w-full">
+          <section className="relative h-[60vh] min-h-[400px] w-full mt-4">
             <Image
               src={featuredMovie.heroImageUrl}
               alt={`Hero image for ${featuredMovie.title}`}
@@ -97,7 +97,7 @@ export default function Home() {
             </div>
           </section>
 
-          <div className="container mx-auto flex flex-col gap-8 px-4 md:gap-12 md:px-6">
+          <div className="container mx-auto flex flex-col gap-8 px-4 py-8 md:gap-12 md:px-6">
             <MovieCarousel title="Trending Now" movies={trendingMovies} />
             <RecommendationsCarousel />
             <MovieCarousel title="New Releases" movies={newReleases} />

@@ -11,8 +11,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className={cn({ 'bg-black': isPlayPage })}>
-      {!isPlayPage && <Header />}
-      <main className={cn({ 'pt-16': !isPlayPage })}>{children}</main>
+      <Header />
+      <main>{children}</main>
       <Toaster />
     </div>
   );
