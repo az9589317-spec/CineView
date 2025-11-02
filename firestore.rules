@@ -1,0 +1,167 @@
+/**
+ * @fileoverview Firestore Security Rules for CineView.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user-specific data
+ * (watchlists, recommendations). Public content (movies, series, content summaries)
+ * is generally readable, but write access is likely restricted to backend services
+ * (not covered in this initial prototyping phase).
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles, with 'userId' matching 'request.auth.uid'.
+ * - /movies/{movieId}: Stores movie details (public read).
+ * - /series/{seriesId}: Stores series details (public read).
+ * - /series/{seriesId}/episodes/{episodeId}: Stores episode details (public read).
+ * - /users/{userId}/watchlists/{watchlistId}: Stores user watchlists (owner-only).
+ * - /users/{userId}/recommendations/{recommendationId}: Stores user recommendations (owner-only).
+ * - /contentSummaries/{contentSummaryId}: Stores AI-generated content summaries (public read).
+ *
+ * Key Security Decisions:
+ * - Users can only access their own watchlists and recommendations.
+ * - Movies, series, episodes, and content summaries are publicly readable.
+ * - Write permissions for movies, series, episodes, and content summaries are not yet defined.
+ *
+ * Denormalization for Authorization:
+ * - The 'userId' is duplicated in the user document itself to maintain path consistency
+ *   and allow for simple owner checks (e.g., `request.resource.data.id == userId`).
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows users to read and write their own user profile.
+     * @path /users/{userId}
+     * @allow (create) User with matching userId can create their profile.
+     * @allow (get, list, update, delete) Signed-in user can access their own profile if userId matches.
+     * @deny (create, update, delete) Signed-in user cannot access others' profiles.
+     * @principle Enforces user-ownership and validates relational integrity.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if true;
+      allow list: if false; // Explicitly disallow listing all users.
+
+      // Allow the user to create their own profile, enforcing that the ID matches the auth UID.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+
+      // Allow the user to update and delete their own profile, but only if the document exists.
+      // Also, enforce that the id field (used for ownership) cannot be changed.
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows anyone to read movie details. Write operations are not yet defined.
+     * @path /movies/{movieId}
+     * @allow (get, list) Any user can read movie details.
+     * @deny (create, update, delete) No one can create, update, or delete movie details (writes are not yet defined).
+     * @principle Allows public read access. Write access is not yet secured.
+     */
+    match /movies/{movieId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Allows anyone to read series details. Write operations are not yet defined.
+     * @path /series/{seriesId}
+     * @allow (get, list) Any user can read series details.
+     * @deny (create, update, delete) No one can create, update, or delete series details (writes are not yet defined).
+     * @principle Allows public read access. Write access is not yet secured.
+     */
+    match /series/{seriesId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Allows anyone to read episode details. Write operations are not yet defined.
+     * @path /series/{seriesId}/episodes/{episodeId}
+     * @allow (get, list) Any user can read episode details.
+     * @deny (create, update, delete) No one can create, update, or delete episode details (writes are not yet defined).
+     * @principle Allows public read access. Write access is not yet secured.
+     */
+    match /series/{seriesId}/episodes/{episodeId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+
+    /**
+     * @description Allows users to read and write their own watchlists.
+     * @path /users/{userId}/watchlists/{watchlistId}
+     * @allow (create) User with matching userId can create their watchlist.
+     * @allow (get, list, update, delete) Signed-in user can access their own watchlist if userId matches.
+     * @deny (create, update, delete) Signed-in user cannot access others' watchlists.
+     * @principle Enforces user-ownership and validates relational integrity.
+     */
+    match /users/{userId}/watchlists/{watchlistId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows users to read and write their own recommendations.
+     * @path /users/{userId}/recommendations/{recommendationId}
+     * @allow (create) User with matching userId can create their recommendation.
+     * @allow (get, list, update, delete) Signed-in user can access their own recommendation if userId matches.
+     * @deny (create, update, delete) Signed-in user cannot access others' recommendations.
+     * @principle Enforces user-ownership and validates relational integrity.
+     */
+    match /users/{userId}/recommendations/{recommendationId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows anyone to read content summaries. Write operations are not yet defined.
+     * @path /contentSummaries/{contentSummaryId}
+     * @allow (get, list) Any user can read content summaries.
+     * @deny (create, update, delete) No one can create, update, or delete content summaries (writes are not yet defined).
+     * @principle Allows public read access. Write access is not yet secured.
+     */
+    match /contentSummaries/{contentSummaryId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+  }
+}

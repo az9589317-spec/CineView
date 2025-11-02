@@ -1,0 +1,413 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the CineView application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "googleId": {
+          "type": "string",
+          "description": "Google ID of the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "joinDate": {
+          "type": "string",
+          "description": "Date and time when the user joined the platform.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "googleId",
+        "username",
+        "email",
+        "joinDate"
+      ]
+    },
+    "Movie": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Movie",
+      "type": "object",
+      "description": "Represents a movie in the CineView catalog.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the movie."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the movie."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description or plot summary of the movie."
+        },
+        "genre": {
+          "type": "string",
+          "description": "Genre of the movie."
+        },
+        "cast": {
+          "type": "string",
+          "description": "Main Cast of the movie."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the movie's poster image.",
+          "format": "uri"
+        },
+        "videoUrl": {
+          "type": "string",
+          "description": "URL for streaming the movie.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "genre",
+        "cast",
+        "imageUrl",
+        "videoUrl"
+      ]
+    },
+    "Series": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Series",
+      "type": "object",
+      "description": "Represents a TV series in the CineView catalog.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the series."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the series."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description or plot summary of the series."
+        },
+        "genre": {
+          "type": "string",
+          "description": "Genre of the series."
+        },
+        "cast": {
+          "type": "string",
+          "description": "Main Cast of the series."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the series's poster image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "genre",
+        "cast",
+        "imageUrl"
+      ]
+    },
+    "Episode": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Episode",
+      "type": "object",
+      "description": "Represents an episode of a TV series.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the episode."
+        },
+        "seriesId": {
+          "type": "string",
+          "description": "Reference to the Series. (Relationship: Series 1:N Episode)"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the episode."
+        },
+        "episodeNumber": {
+          "type": "number",
+          "description": "Episode number within the series."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description or summary of the episode."
+        },
+        "videoUrl": {
+          "type": "string",
+          "description": "URL for streaming the episode.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "seriesId",
+        "title",
+        "episodeNumber",
+        "description",
+        "videoUrl"
+      ]
+    },
+    "Watchlist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Watchlist",
+      "type": "object",
+      "description": "Represents a user's watchlist, containing references to movies and series.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the watchlist."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User. (Relationship: User 1:N Watchlist)"
+        },
+        "movieIds": {
+          "type": "array",
+          "description": "References to Movies. (Relationship: Watchlist 1:N Movie)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "seriesIds": {
+          "type": "array",
+          "description": "References to Series. (Relationship: Watchlist 1:N Series)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId"
+      ]
+    },
+    "Recommendation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recommendation",
+      "type": "object",
+      "description": "Represents a movie or series recommendation for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the recommendation."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User. (Relationship: User 1:N Recommendation)"
+        },
+        "movieId": {
+          "type": "string",
+          "description": "Reference to the Movie. (Relationship: Recommendation 1:1 Movie) - If the recommendation is a movie."
+        },
+        "seriesId": {
+          "type": "string",
+          "description": "Reference to the Series. (Relationship: Recommendation 1:1 Series) - If the recommendation is a series."
+        },
+        "score": {
+          "type": "number",
+          "description": "Recommendation score or confidence level."
+        }
+      },
+      "required": [
+        "id",
+        "userId"
+      ]
+    },
+    "ContentSummary": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContentSummary",
+      "type": "object",
+      "description": "Stores AI-generated summaries for movies and series.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the content summary."
+        },
+        "movieId": {
+          "type": "string",
+          "description": "Reference to the Movie. (Relationship: ContentSummary 1:1 Movie). Null if seriesId is present."
+        },
+        "seriesId": {
+          "type": "string",
+          "description": "Reference to the Series. (Relationship: ContentSummary 1:1 Series). Null if movieId is present."
+        },
+        "summaryText": {
+          "type": "string",
+          "description": "The generated content summary text."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "Keywords associated with the content summary.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "Date and time when the summary was generated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "summaryText",
+        "keywords",
+        "generationDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  The `userId` is derived from `request.auth.uid` after successful Google Login.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/movies/{movieId}",
+        "definition": {
+          "entityName": "Movie",
+          "schema": {
+            "$ref": "#/backend/entities/Movie"
+          },
+          "description": "Stores movie details. No user-specific data stored here.",
+          "params": [
+            {
+              "name": "movieId",
+              "description": "The unique identifier for the movie."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/series/{seriesId}",
+        "definition": {
+          "entityName": "Series",
+          "schema": {
+            "$ref": "#/backend/entities/Series"
+          },
+          "description": "Stores series details. No user-specific data stored here.",
+          "params": [
+            {
+              "name": "seriesId",
+              "description": "The unique identifier for the series."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/series/{seriesId}/episodes/{episodeId}",
+        "definition": {
+          "entityName": "Episode",
+          "schema": {
+            "$ref": "#/backend/entities/Episode"
+          },
+          "description": "Stores episode details for a specific series.",
+          "params": [
+            {
+              "name": "seriesId",
+              "description": "The unique identifier for the series."
+            },
+            {
+              "name": "episodeId",
+              "description": "The unique identifier for the episode."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/watchlists/{watchlistId}",
+        "definition": {
+          "entityName": "Watchlist",
+          "schema": {
+            "$ref": "#/backend/entities/Watchlist"
+          },
+          "description": "Stores user watchlists. Path-based ownership enforced.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "watchlistId",
+              "description": "The unique identifier for the watchlist."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/recommendations/{recommendationId}",
+        "definition": {
+          "entityName": "Recommendation",
+          "schema": {
+            "$ref": "#/backend/entities/Recommendation"
+          },
+          "description": "Stores movie/series recommendations for a specific user. Path-based ownership enforced.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "recommendationId",
+              "description": "The unique identifier for the recommendation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/contentSummaries/{contentSummaryId}",
+        "definition": {
+          "entityName": "ContentSummary",
+          "schema": {
+            "$ref": "#/backend/entities/ContentSummary"
+          },
+          "description": "Stores AI-generated summaries for movies and series. Not specific to any user.",
+          "params": [
+            {
+              "name": "contentSummaryId",
+              "description": "The unique identifier for the content summary."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support CineView's core features, including user authentication, movie/series catalog, streaming, personalized watchlists, recommendations, search, and AI-powered content summaries. It prioritizes authorization independence, clarity, and scalability.\n\n**Authorization Independence:** Achieved by avoiding `get()` calls in security rules. User-specific data (watchlists, recommendations) are stored under the `/users/{userId}` path, making ownership clear and enabling path-based security rules.\n\n**Structural Segregation:**  Each collection houses documents with similar access control needs, simplifying security rules. Publicly accessible data like movies and series reside in their respective collections (`/movies`, `/series`). User-specific data is segregated under the `/users/{userId}` collection.\n\n**Access Modeling:**\n*   **Path-Based Ownership:** User-owned data like watchlists and recommendations are nested under `/users/{userId}`, which clearly defines ownership.  Episodes are nested under series using `/series/{seriesId}/episodes/{episodeId}`.\n\n**QAPs (Rules are not Filters):**\n*   `list` operations are secured via structural segregation and path-based ownership. Listing movies or series requires no user context. Listing user-specific resources (watchlists, recommendations) is constrained by the `userId` path parameter, preventing unauthorized access.\n\n**Invariants:**\n*   Timestamps (e.g., `joinDate`, `generationDate`) can be enforced in security rules to maintain data integrity.\n\n**Google Login:** User authentication is handled via Google Login, with the `googleId` stored in the user document. The `userId` derived from `request.auth.uid` will then act as the top level identifier for user specific data."
+  }
+}
