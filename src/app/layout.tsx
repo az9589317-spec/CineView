@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { WatchlistProvider } from '@/contexts/watchlist-context';
 import Header from '@/components/layout/header';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'CineView',
@@ -29,11 +30,13 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <WatchlistProvider>
-          <Header />
-          <main>{children}</main>
-          <Toaster />
-        </WatchlistProvider>
+        <FirebaseClientProvider>
+          <WatchlistProvider>
+            <Header />
+            <main>{children}</main>
+            <Toaster />
+          </WatchlistProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

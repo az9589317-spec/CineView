@@ -1,13 +1,29 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clapperboard } from "lucide-react";
-import Link from "next/link";
+import { useAuth } from "@/firebase";
+import { initiateGoogleSignIn } from "@/firebase/non-blocking-login";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useUser } from "@/firebase/auth/use-user";
 
 export default function LoginPage() {
+  const auth = useAuth();
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
+  const handleGoogleSignIn = () => {
+    initiateGoogleSignIn(auth);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
@@ -16,32 +32,13 @@ export default function LoginPage() {
              <Clapperboard className="h-10 w-10 text-accent" />
           </div>
           <CardTitle className="font-headline text-3xl">Welcome to CineView</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardDescription>Sign in to access your watchlist and recommendations.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <Label htmlFor="password">Password</Label>
-              <Link href="#" className="ml-auto inline-block text-xs underline">
-                Forgot your password?
-              </Link>
-            </div>
-            <Input id="password" type="password" required />
-          </div>
+        <CardContent>
+          <Button className="w-full" onClick={handleGoogleSignIn}>
+            Sign in with Google
+          </Button>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full">Log in</Button>
-          <div className="text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="#" className="underline">
-              Sign up
-            </Link>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );
