@@ -26,7 +26,7 @@ export function MovieCarousel({ title, movies }: MovieCarouselProps) {
       <Carousel
         opts={{
           align: 'start',
-          loop: movies.length > 5,
+          loop: movies.length > 7,
         }}
         className="w-full"
       >
@@ -34,7 +34,7 @@ export function MovieCarousel({ title, movies }: MovieCarouselProps) {
           {movies.map((movie) => (
             <CarouselItem
               key={movie.id}
-              className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
+              className="basis-[150px] sm:basis-[180px] md:basis-[200px]"
             >
               <MovieCard movie={movie} />
             </CarouselItem>

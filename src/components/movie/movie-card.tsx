@@ -29,13 +29,13 @@ export function MovieCard({ movie }: MovieCardProps) {
   return (
     (<Link
       href={`/watch/${movie.id}`}
-      className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl">
+      className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl aspect-[2/3]">
 
       <Image
         src={movie.thumbnailUrl}
         alt={`Poster for ${movie.title}`}
-        width={500}
-        height={750}
+        fill
+        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
         className="transform object-cover transition-transform duration-300 group-hover:scale-105"
         data-ai-hint={movie.cardImageHint} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
