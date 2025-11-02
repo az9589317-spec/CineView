@@ -78,7 +78,7 @@ body {
     animation: fadeIn 1s ease-in-out;
   }
   @keyframes fadeIn {
-    from { opacity: 0.8; }
+    from { opacity: 0; }
     to { opacity: 1; }
   }
 }
