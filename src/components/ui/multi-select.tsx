@@ -91,7 +91,6 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
             event.preventDefault();
             const newOptionValue = inputValue.trim();
             
-            // Check if this value already exists either as an option or as a selected value
             const valueExists = options.some(o => o.value.toLowerCase() === newOptionValue.toLowerCase()) || selectedValues.some(v => v.toLowerCase() === newOptionValue.toLowerCase());
 
             if (newOptionValue && !valueExists) {
@@ -133,7 +132,18 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
           uniqueOptions.set(value.toLowerCase(), { label: value, value: value });
         }
       });
-      return Array.from(uniqueOptions.values());
+      return Array.from(uniqueOptions.values()).filter(option => option.label.toLowerCase().includes(inputValue.toLowerCase()));
+    }, [options, selectedValues, inputValue]);
+    
+    const allOptions = React.useMemo(() => {
+        const uniqueOptions = new Map<string, {label: string, value: string}>();
+        options.forEach(option => uniqueOptions.set(option.value.toLowerCase(), option));
+        selectedValues.forEach(value => {
+            if (!uniqueOptions.has(value.toLowerCase())) {
+            uniqueOptions.set(value.toLowerCase(), { label: value, value: value });
+            }
+        });
+        return Array.from(uniqueOptions.values());
     }, [options, selectedValues]);
 
 
@@ -155,7 +165,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                 <div className="flex justify-between items-center w-full">
                   <div className="flex flex-wrap items-center">
                     {selectedValues.slice(0, maxCount).map((value) => {
-                      const option = displayedOptions.find((o) => o.value === value);
+                      const option = allOptions.find((o) => o.value === value);
                       const Icon = option?.icon;
                       return (
                         <Badge
