@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Bookmark, Check, PlayCircle } from 'lucide-react';
 import type { Movie } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ export function MovieCard({ movie }: MovieCardProps) {
   };
 
   return (
-    <div className="group relative block w-full cursor-pointer overflow-hidden rounded-lg">
+    <div className="group relative block w-full cursor-pointer overflow-hidden rounded-2xl">
       <Image
         src={movie.thumbnailUrl}
         alt={`Poster for ${movie.title}`}
@@ -43,7 +44,7 @@ export function MovieCard({ movie }: MovieCardProps) {
             <Button size="icon" className="h-14 w-14 rounded-full bg-accent/80 backdrop-blur-sm hover:bg-accent">
                 <PlayCircle className="h-8 w-8" />
             </Button>
-        }/>
+        } />
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 p-4">
