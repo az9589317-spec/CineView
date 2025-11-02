@@ -14,7 +14,7 @@ import { Loader2, Upload, CheckCircle, Video, Image as ImageIcon } from 'lucide-
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { uploadFile, saveMovie } from '../actions';
+import { saveMovie } from '../actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
@@ -86,34 +86,64 @@ export default function UploadPage() {
       }
     }
   }, [user, isUserLoading, router]);
-
-  const handleFileUpload = async (type: 'poster' | 'video') => {
-    const file = type === 'poster' ? posterFile : videoFile;
+  
+  const handleClientUpload = async (file: File, type: 'poster' | 'video') => {
     if (!file) return;
 
     setIsUploading(type);
-    const formData = new FormData();
-    formData.append('file', file);
 
-    const result = await uploadFile(formData, type);
+    try {
+      // 1. Get authentication parameters from our API route
+      const authResponse = await fetch('/api/imagekit-auth');
+      if (!authResponse.ok) {
+        throw new Error('Failed to get authentication parameters.');
+      }
+      const authData = await authResponse.json();
 
-    if (result.success && result.url) {
+      // 2. Upload the file directly to ImageKit
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', file.name);
+      formData.append('publicKey', process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
+      formData.append('signature', authData.signature);
+      formData.append('expire', authData.expire);
+      formData.append('token', authData.token);
+      
+      const folder = type === 'poster' ? '/movie-posters/' : '/movie-videos/';
+      formData.append('folder', folder);
+
+      const uploadResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorResult = await uploadResponse.json();
+        throw new Error(errorResult.message || 'ImageKit upload failed.');
+      }
+
+      const result = await uploadResponse.json();
+
       if (type === 'poster') setPosterUrl(result.url);
       if (type === 'video') setVideoUrl(result.url);
+      
       toast({
         title: `${type.charAt(0).toUpperCase() + type.slice(1)} Upload Successful`,
         description: `Your ${type} has been uploaded.`,
       });
-    } else {
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       toast({
         variant: 'destructive',
         title: 'Upload Failed',
-        description: result.message,
+        description: errorMessage,
       });
+    } finally {
+      setIsUploading(false);
     }
-    setIsUploading(false);
   };
-  
+
   const onSaveMovie = async (values: UploadFormValues) => {
     if (!posterUrl || !videoUrl) {
         toast({
@@ -273,7 +303,7 @@ export default function UploadPage() {
                         </FormItem>
                         )}
                     />
-                    <Button type="button" onClick={() => handleFileUpload('poster')} disabled={!posterFile || !!posterUrl || isUploading === 'poster'}>
+                    <Button type="button" onClick={() => handleClientUpload(posterFile!, 'poster')} disabled={!posterFile || !!posterUrl || isUploading === 'poster'}>
                         {isUploading === 'poster' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                         Upload Poster
                     </Button>
@@ -307,7 +337,7 @@ export default function UploadPage() {
                         </FormItem>
                         )}
                     />
-                    <Button type="button" onClick={() => handleFileUpload('video')} disabled={!videoFile || !!videoUrl || isUploading === 'video'}>
+                    <Button type="button" onClick={() => handleClientUpload(videoFile!, 'video')} disabled={!videoFile || !!videoUrl || isUploading === 'video'}>
                         {isUploading === 'video' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                         Upload Video
                     </Button>
