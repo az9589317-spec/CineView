@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, use } from "react";
 import { doc } from "firebase/firestore";
 import { useDocument } from "react-firebase-hooks/firestore";
 import { initializeFirebase } from "@/firebase";
@@ -92,10 +92,11 @@ function WatchPageContent({ movieId }: { movieId: string }) {
   );
 }
 
-export default function WatchPage({ params }: { params: { id: string } }) {
+export default function WatchPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <WatchPageContent movieId={params.id} />
+      <WatchPageContent movieId={id} />
     </Suspense>
   );
 }
