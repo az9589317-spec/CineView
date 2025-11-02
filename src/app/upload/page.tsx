@@ -14,10 +14,10 @@ import { Loader2, Upload, CheckCircle, Video, Image as ImageIcon } from 'lucide-
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { saveMovie } from '../actions';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
 
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
@@ -145,11 +145,11 @@ export default function UploadPage() {
   };
 
   const onSaveMovie = async (values: UploadFormValues) => {
-    if (!posterUrl || !videoUrl) {
+    if (!posterUrl || !videoUrl || !firestore) {
         toast({
             variant: 'destructive',
-            title: 'Missing files',
-            description: 'Please upload both a poster and a video file.',
+            title: 'Missing files or connection',
+            description: 'Please upload both a poster and a video file, and ensure you are connected.',
         });
         return;
     }
@@ -163,6 +163,7 @@ export default function UploadPage() {
       year: new Date().getFullYear(),
       genre: values.genres,
       cast: values.cast,
+      rating: 0,
       duration: 'N/A',
       thumbnailUrl: posterUrl,
       heroImageUrl: posterUrl,
@@ -171,24 +172,30 @@ export default function UploadPage() {
       videoUrl: videoUrl,
     };
 
-    const result = await saveMovie(movieData);
+    try {
+        const moviesCollection = collection(firestore, 'movies');
+        await addDoc(moviesCollection, movieData);
 
-    if (result.success) {
-      toast({
-        title: 'Movie Saved!',
-        description: `"${values.title}" has been successfully added.`,
-      });
-      form.reset();
-      setPosterUrl(null);
-      setVideoUrl(null);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to Save Movie',
-        description: result.message,
-      });
+        toast({
+            title: 'Movie Saved!',
+            description: `"${values.title}" has been successfully added.`,
+        });
+        form.reset();
+        setPosterUrl(null);
+        setVideoUrl(null);
+        // Manually trigger revalidation if needed, though useCollection should update
+        // revalidatePath('/'); 
+    } catch (error) {
+        console.error("Error saving movie:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        toast({
+            variant: 'destructive',
+            title: 'Failed to Save Movie',
+            description: errorMessage,
+        });
+    } finally {
+        setIsUploading(false);
     }
-    setIsUploading(false);
   };
 
   if (isUserLoading || !isAuthorized) {
