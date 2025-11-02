@@ -4,7 +4,6 @@ import { generateAiSummary, AiSummaryInput } from '@/ai/flows/ai-summary-for-tit
 import { recommendBasedOnHistory } from '@/ai/flows/recommendation-based-on-history';
 import type { Movie } from '@/lib/types';
 import ImageKit from 'imagekit';
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { initializeServerApp } from '@/firebase/server-init';
 import { revalidatePath } from 'next/cache';
 
@@ -16,8 +15,7 @@ const imagekit = new ImageKit({
 
 export async function getRecommendations(viewingHistory: string): Promise<Movie[]> {
   try {
-    await initializeServerApp();
-    const firestore = getAdminFirestore();
+    const { firestore } = await initializeServerApp();
     const moviesSnapshot = await firestore.collection('movies').get();
     const allMovies = moviesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Movie[];
 
@@ -88,8 +86,7 @@ export async function uploadFile(formData: FormData, type: 'poster' | 'video') {
 
 export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
     try {
-        await initializeServerApp();
-        const firestore = getAdminFirestore();
+        const { firestore } = await initializeServerApp();
         const moviesCollection = firestore.collection('movies');
         
         const newMovieData = {
