@@ -35,24 +35,24 @@ body {
     --radius: 0.5rem;
   }
   .dark {
-    --background: 0 0% 11.8%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 15%;
+    --card: 0 0% 5%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 11.8%;
+    --popover: 0 0% 0%;
     --popover-foreground: 0 0% 98%;
     --primary: 228 44% 45%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 20%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 20%;
+    --muted: 0 0% 10%;
     --muted-foreground: 0 0% 63.9%;
     --accent: 298 59% 48%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 22%;
-    --input: 0 0% 22%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
     --ring: 298 59% 48%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
