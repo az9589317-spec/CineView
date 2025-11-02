@@ -8,9 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function PlayPage({ params }: { params: { id: string } }) {
+export default function PlayPage({ params: { id } }: { params: { id: string } }) {
   const firestore = useFirestore();
-  const { id } = params;
 
   const movieRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
