@@ -53,16 +53,24 @@ export async function getAiSummary(input: AiSummaryInput): Promise<string> {
   }
 }
 
-async function uploadToImagekit(file: File, folder: string) {
+async function uploadToImagekit(file: File, type: 'poster' | 'video') {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
   const base64File = fileBuffer.toString('base64');
   
+  const folder = type === 'poster' ? '/movie-posters/' : '/movie-videos/';
+
   try {
-    const uploadResult = await imagekit.upload({
+    const uploadOptions: any = {
       file: base64File,
       fileName: file.name,
       folder: folder,
-    });
+    };
+
+    if (type === 'video') {
+      uploadOptions.timeout = 300000; // 5 minutes timeout for videos
+    }
+
+    const uploadResult = await imagekit.upload(uploadOptions);
     return { success: true, url: uploadResult.url };
   } catch (error) {
     console.error('[ImageKit Upload Error]', error);
@@ -76,8 +84,7 @@ export async function uploadFile(formData: FormData, type: 'poster' | 'video') {
     if (!file) {
         return { success: false, message: 'No file provided.' };
     }
-    const folder = type === 'poster' ? '/movie-posters/' : '/movie-videos/';
-    return await uploadToImagekit(file, folder);
+    return await uploadToImagekit(file, type);
 }
 
 export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
