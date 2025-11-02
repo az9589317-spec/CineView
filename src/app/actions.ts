@@ -8,6 +8,7 @@ import ImageKit from 'imagekit';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, getFirestore } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
+import { revalidatePath } from 'next/cache';
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
@@ -51,70 +52,47 @@ export async function getAiSummary(input: AiSummaryInput): Promise<string> {
   }
 }
 
-export async function uploadMovie(formData: FormData) {
+async function uploadToImagekit(file: File, folder: string) {
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
   try {
-    const { firestore } = initializeFirebase();
-
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const genres = JSON.parse(formData.get('genres') as string);
-    const cast = JSON.parse(formData.get('cast') as string);
-    const posterImage = formData.get('posterImage') as File;
-    const videoFile = formData.get('videoFile') as File;
-
-    if (!title || !description || !genres.length || !cast.length || !posterImage || !videoFile) {
-      return { success: false, message: 'Missing required fields' };
-    }
-
-    const posterImageBuffer = Buffer.from(await posterImage.arrayBuffer());
-    const videoFileBuffer = Buffer.from(await videoFile.arrayBuffer());
-
-    const [posterUploadResult, videoUploadResult] = await Promise.allSettled([
-      imagekit.upload({
-        file: posterImageBuffer,
-        fileName: posterImage.name,
-        folder: '/movie-posters/',
-      }),
-      imagekit.upload({
-        file: videoFileBuffer,
-        fileName: videoFile.name,
-        folder: '/movie-videos/',
-      }),
-    ]);
-
-    if (posterUploadResult.status === 'rejected') {
-      throw new Error(`Poster upload failed: ${posterUploadResult.reason.message}`);
-    }
-    if (videoUploadResult.status === 'rejected') {
-      throw new Error(`Video upload failed: ${videoUploadResult.reason.message}`);
-    }
-
-    const posterUpload = posterUploadResult.value;
-    const videoUpload = videoUploadResult.value;
-
-    const newMovie = {
-      title,
-      description,
-      longDescription: description,
-      year: new Date().getFullYear(),
-      genre: genres,
-      cast,
-      rating: 0,
-      duration: 'N/A',
-      thumbnailUrl: posterUpload.url,
-      heroImageUrl: posterUpload.url,
-      cardImageHint: 'movie poster',
-      heroImageHint: 'movie hero image',
-      videoUrl: videoUpload.url
-    };
-    
-    const moviesCollection = collection(firestore, 'movies');
-    await addDocumentNonBlocking(moviesCollection, newMovie);
-
-    return { success: true, message: 'Movie uploaded successfully!' };
+    const uploadResult = await imagekit.upload({
+      file: fileBuffer,
+      fileName: file.name,
+      folder: folder,
+    });
+    return { success: true, url: uploadResult.url };
   } catch (error) {
-    console.error('Error uploading movie:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     return { success: false, message: `Upload failed: ${errorMessage}` };
   }
+}
+
+export async function uploadFile(formData: FormData, type: 'poster' | 'video') {
+    const file = formData.get(type === 'poster' ? 'posterImage' : 'videoFile') as File;
+    if (!file) {
+        return { success: false, message: 'No file provided.' };
+    }
+    const folder = type === 'poster' ? '/movie-posters/' : '/movie-videos/';
+    return await uploadToImagekit(file, folder);
+}
+
+export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
+    try {
+        const { firestore } = initializeFirebase();
+        const moviesCollection = collection(firestore, 'movies');
+        
+        const newMovieData = {
+          ...movieData,
+          rating: 0, // default rating
+        };
+
+        await addDocumentNonBlocking(moviesCollection, newMovieData);
+        revalidatePath('/'); // Revalidate home page to show new movie
+        return { success: true, message: 'Movie saved successfully!' };
+
+    } catch (error) {
+        console.error('Error saving movie:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to save movie: ${errorMessage}` };
+    }
 }

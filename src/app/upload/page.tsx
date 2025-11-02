@@ -11,12 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, CheckCircle, AlertCircle, Video, Image as ImageIcon } from 'lucide-react';
 import { movies, genres } from '@/lib/data';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { uploadMovie } from '../actions';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { uploadFile, saveMovie } from '../actions';
+import { Progress } from '@/components/ui/progress';
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
 
@@ -28,8 +29,8 @@ const formSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   genres: z.array(z.string()).min(1, 'At least one genre is required'),
   cast: z.array(z.string()).min(1, 'At least one cast member is required'),
-  posterImage: z.instanceof(File).refine(file => file.size > 0, 'Poster image is required.'),
-  videoFile: z.instanceof(File).refine(file => file.size > 0, 'Video file is required.'),
+  posterImage: z.instanceof(File).optional(),
+  videoFile: z.instanceof(File).optional(),
 });
 
 type UploadFormValues = z.infer<typeof formSchema>;
@@ -39,7 +40,10 @@ export default function UploadPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  
+  const [isUploading, setIsUploading] = useState<'poster' | 'video' | 'movie' | false>(false);
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(formSchema),
@@ -48,10 +52,11 @@ export default function UploadPage() {
       description: '',
       genres: [],
       cast: [],
-      posterImage: undefined,
-      videoFile: undefined,
     },
   });
+
+  const posterFile = form.watch('posterImage');
+  const videoFile = form.watch('videoFile');
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -62,26 +67,24 @@ export default function UploadPage() {
       }
     }
   }, [user, isUserLoading, router]);
-  
-  const onSubmit = async (values: UploadFormValues) => {
-    setIsUploading(true);
 
+  const handleFileUpload = async (type: 'poster' | 'video') => {
+    const file = type === 'poster' ? posterFile : videoFile;
+    if (!file) return;
+
+    setIsUploading(type);
     const formData = new FormData();
-    formData.append('title', values.title);
-    formData.append('description', values.description);
-    formData.append('genres', JSON.stringify(values.genres));
-    formData.append('cast', JSON.stringify(values.cast));
-    formData.append('posterImage', values.posterImage);
-    formData.append('videoFile', values.videoFile);
+    formData.append(type === 'poster' ? 'posterImage' : 'videoFile', file);
 
-    const result = await uploadMovie(formData);
+    const result = await uploadFile(formData, type);
 
-    if (result.success) {
+    if (result.success && result.url) {
+      if (type === 'poster') setPosterUrl(result.url);
+      if (type === 'video') setVideoUrl(result.url);
       toast({
-        title: 'Upload Successful',
-        description: `"${values.title}" has been uploaded.`,
+        title: `${type.charAt(0).toUpperCase() + type.slice(1)} Upload Successful`,
+        description: `Your ${type} has been uploaded.`,
       });
-      form.reset();
     } else {
       toast({
         variant: 'destructive',
@@ -89,10 +92,55 @@ export default function UploadPage() {
         description: result.message,
       });
     }
-
     setIsUploading(false);
   };
+  
+  const onSaveMovie = async (values: UploadFormValues) => {
+    if (!posterUrl || !videoUrl) {
+        toast({
+            variant: 'destructive',
+            title: 'Missing files',
+            description: 'Please upload both a poster and a video file.',
+        });
+        return;
+    }
+    
+    setIsUploading('movie');
 
+    const movieData = {
+      title: values.title,
+      description: values.description,
+      longDescription: values.description,
+      year: new Date().getFullYear(),
+      genre: values.genres,
+      cast: values.cast,
+      duration: 'N/A',
+      thumbnailUrl: posterUrl,
+      heroImageUrl: posterUrl,
+      cardImageHint: 'movie poster',
+      heroImageHint: 'movie hero image',
+      videoUrl: videoUrl,
+    };
+
+    const result = await saveMovie(movieData);
+
+    if (result.success) {
+      toast({
+        title: 'Movie Saved!',
+        description: `"${values.title}" has been successfully added.`,
+      });
+      form.reset();
+      setPosterUrl(null);
+      setVideoUrl(null);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to Save Movie',
+        description: result.message,
+      });
+    }
+    setIsUploading(false);
+  };
 
   if (isUserLoading || !isAuthorized) {
     return (
@@ -101,6 +149,8 @@ export default function UploadPage() {
       </div>
     );
   }
+
+  const isFormDisabled = !!isUploading;
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8 md:px-6">
@@ -113,106 +163,141 @@ export default function UploadPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Title</Label>
-                    <FormControl>
-                      <Input placeholder="Movie Title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Description</Label>
-                    <FormControl>
-                      <Textarea placeholder="Movie Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="genres"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Genre</Label>
-                    <MultiSelect
-                      options={allGenres}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      placeholder="Select genres"
-                      variant="secondary"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="cast"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Cast</Label>
-                    <MultiSelect
-                      options={allCast}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      placeholder="Select cast members"
-                      variant="secondary"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="posterImage"
-                render={({ field: { onChange, value, ...rest } }) => (
-                  <FormItem>
-                    <Label>Poster Image</Label>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => onChange(e.target.files?.[0])}
-                        {...rest}
+            <form onSubmit={form.handleSubmit(onSaveMovie)} className="space-y-6">
+              <fieldset disabled={isFormDisabled} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Movie Title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Movie Description" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="genres"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Genre</FormLabel>
+                      <MultiSelect
+                        options={allGenres}
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        placeholder="Select genres"
+                        variant="secondary"
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="videoFile"
-                render={({ field: { onChange, value, ...rest } }) => (
-                  <FormItem>
-                    <Label>Video File</Label>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="video/*"
-                        onChange={(e) => onChange(e.target.files?.[0])}
-                        {...rest}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cast"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cast</FormLabel>
+                      <MultiSelect
+                        options={allCast}
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        placeholder="Select cast members"
+                        variant="secondary"
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={isUploading}>
-                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Upload Movie
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </fieldset>
+
+              <div className="space-y-4 rounded-lg border bg-card p-4">
+                 <div className="flex items-center gap-4">
+                    {posterUrl ? (
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    ) : (
+                      <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                    )}
+                    <FormField
+                        control={form.control}
+                        name="posterImage"
+                        render={({ field: { onChange, ...rest } }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel className={posterUrl ? 'text-muted-foreground' : ''}>Poster Image</FormLabel>
+                            <FormControl>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => onChange(e.target.files?.[0])}
+                                disabled={isFormDisabled || !!posterUrl}
+                                {...rest}
+                            />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <Button type="button" onClick={() => handleFileUpload('poster')} disabled={!posterFile || !!posterUrl || isUploading === 'poster'}>
+                        {isUploading === 'poster' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        Upload Poster
+                    </Button>
+                 </div>
+                 {isUploading === 'poster' && <Progress value={undefined} />}
+              </div>
+
+              <div className="space-y-4 rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-4">
+                    {videoUrl ? (
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    ) : (
+                      <Video className="h-6 w-6 text-muted-foreground" />
+                    )}
+                    <FormField
+                        control={form.control}
+                        name="videoFile"
+                        render={({ field: { onChange, ...rest } }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel className={videoUrl ? 'text-muted-foreground' : ''}>Video File</FormLabel>
+                            <FormControl>
+                            <Input
+                                type="file"
+                                accept="video/*"
+                                onChange={(e) => onChange(e.target.files?.[0])}
+                                disabled={isFormDisabled || !!videoUrl}
+                                {...rest}
+                            />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <Button type="button" onClick={() => handleFileUpload('video')} disabled={!videoFile || !!videoUrl || isUploading === 'video'}>
+                        {isUploading === 'video' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        Upload Video
+                    </Button>
+                </div>
+                {isUploading === 'video' && <Progress value={undefined} />}
+              </div>
+              
+              <Button type="submit" disabled={isFormDisabled || !posterUrl || !videoUrl}>
+                {isUploading === 'movie' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Movie
               </Button>
             </form>
           </Form>
