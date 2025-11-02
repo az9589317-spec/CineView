@@ -55,13 +55,12 @@ export async function getAiSummary(input: AiSummaryInput): Promise<string> {
 
 async function uploadToImagekit(file: File, type: 'poster' | 'video') {
   const fileBuffer = Buffer.from(await file.arrayBuffer());
-  const base64File = fileBuffer.toString('base64');
   
   const folder = type === 'poster' ? '/movie-posters/' : '/movie-videos/';
 
   try {
     const uploadOptions: any = {
-      file: base64File,
+      file: fileBuffer,
       fileName: file.name,
       folder: folder,
     };

@@ -72,7 +72,7 @@ export default function UploadPage() {
 
     setIsUploading(type);
     const formData = new FormData();
-    formData.append(type === 'poster' ? 'posterImage' : 'videoFile', file);
+    formData.append('file', file);
 
     const result = await uploadFile(formData, type);
 
