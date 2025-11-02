@@ -52,14 +52,22 @@ export function VideoPlayer({ movie }: VideoPlayerProps) {
           </DialogTitle>
         </DialogHeader>
         <div className="aspect-video w-full">
-          <iframe
-            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="h-full w-full"
-          ></iframe>
+          {movie.videoUrl ? (
+             <video
+                src={movie.videoUrl}
+                controls
+                className="h-full w-full"
+             />
+          ) : (
+            <iframe
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full"
+            ></iframe>
+          )}
         </div>
       </DialogContent>
     </Dialog>

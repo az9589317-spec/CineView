@@ -12,4 +12,5 @@ export interface Movie {
   heroImageUrl: string;
   cardImageHint: string;
   heroImageHint: string;
+  videoUrl?: string;
 }
