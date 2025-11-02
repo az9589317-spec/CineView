@@ -12,38 +12,61 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { User, LogIn, LogOut } from 'lucide-react';
+import { User, LogIn, LogOut, Search } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
 import { useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
+import { Skeleton } from '../ui/skeleton';
 
 export function UserNav() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
 
   const handleLogout = async () => {
-    await signOut(auth);
+    if (auth) {
+      await signOut(auth);
+    }
   };
 
   if (isUserLoading) {
-    return <Button variant="ghost" className="relative h-8 w-8 rounded-full" disabled />;
+    return <Skeleton className="h-9 w-24 rounded-md" />;
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-2">
+         <Button variant="ghost" size="icon" className="md:hidden">
+            <Search className="h-5 w-5" />
+            <span className="sr-only">Search</span>
+          </Button>
+        <Button asChild>
+          <Link href="/login">
+            <LogIn className="mr-2" />
+            Sign In
+          </Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            {user?.photoURL && <AvatarImage src={user.photoURL} alt="User avatar" />}
-            <AvatarFallback>
-              <User />
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        {user ? (
-          <>
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="icon" className="md:hidden">
+        <Search className="h-5 w-5" />
+        <span className="sr-only">Search</span>
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Avatar className="h-10 w-10">
+              {user.photoURL && <AvatarImage src={user.photoURL} alt="User avatar" />}
+              <AvatarFallback>
+                <User />
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{user.displayName || 'Cinephile'}</p>
@@ -64,16 +87,8 @@ export function UserNav() {
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>
-          </>
-        ) : (
-          <Link href="/login">
-            <DropdownMenuItem>
-              <LogIn className="mr-2 h-4 w-4" />
-              <span>Log in</span>
-            </DropdownMenuItem>
-          </Link>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

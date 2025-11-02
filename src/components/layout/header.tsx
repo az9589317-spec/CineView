@@ -28,7 +28,7 @@ export default function Header() {
         </Link>
         <MainNav />
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <form onSubmit={handleSearch} className="relative w-full max-w-xs">
+          <form onSubmit={handleSearch} className="relative hidden w-full max-w-xs md:block">
             <Input
               type="search"
               placeholder="Search movies & series..."
