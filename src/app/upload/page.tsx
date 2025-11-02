@@ -10,14 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Loader2, Upload, CheckCircle, AlertCircle, Video, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Upload, CheckCircle, Video, Image as ImageIcon } from 'lucide-react';
 import { movies, genres } from '@/lib/data';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { uploadFile, saveMovie } from '../actions';
-import { Progress } from '@/components/ui/progress';
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
 
@@ -237,7 +235,7 @@ export default function UploadPage() {
                     <FormField
                         control={form.control}
                         name="posterImage"
-                        render={({ field: { onChange, ...rest } }) => (
+                        render={({ field: { onChange, onBlur, name, ref } }) => (
                         <FormItem className="flex-1">
                             <FormLabel className={posterUrl ? 'text-muted-foreground' : ''}>Poster Image</FormLabel>
                             <FormControl>
@@ -245,8 +243,10 @@ export default function UploadPage() {
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => onChange(e.target.files?.[0])}
+                                onBlur={onBlur}
+                                name={name}
+                                ref={ref}
                                 disabled={isFormDisabled || !!posterUrl}
-                                {...rest}
                             />
                             </FormControl>
                             <FormMessage />
@@ -258,7 +258,6 @@ export default function UploadPage() {
                         Upload Poster
                     </Button>
                  </div>
-                 {isUploading === 'poster' && <Progress value={undefined} />}
               </div>
 
               <div className="space-y-4 rounded-lg border bg-card p-4">
@@ -271,7 +270,7 @@ export default function UploadPage() {
                     <FormField
                         control={form.control}
                         name="videoFile"
-                        render={({ field: { onChange, ...rest } }) => (
+                        render={({ field: { onChange, onBlur, name, ref } }) => (
                         <FormItem className="flex-1">
                             <FormLabel className={videoUrl ? 'text-muted-foreground' : ''}>Video File</FormLabel>
                             <FormControl>
@@ -279,8 +278,10 @@ export default function UploadPage() {
                                 type="file"
                                 accept="video/*"
                                 onChange={(e) => onChange(e.target.files?.[0])}
+                                onBlur={onBlur}
+                                name={name}
+                                ref={ref}
                                 disabled={isFormDisabled || !!videoUrl}
-                                {...rest}
                             />
                             </FormControl>
                             <FormMessage />
@@ -292,7 +293,6 @@ export default function UploadPage() {
                         Upload Video
                     </Button>
                 </div>
-                {isUploading === 'video' && <Progress value={undefined} />}
               </div>
               
               <Button type="submit" disabled={isFormDisabled || !posterUrl || !videoUrl}>
