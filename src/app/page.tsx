@@ -30,44 +30,41 @@ export default function Home() {
 
   const { data: movies, isLoading } = useCollection<Movie>(moviesQuery);
 
-  const [featuredMovie, setFeaturedMovie] = useState<Movie | undefined>(undefined);
-  const [featuredMovieIndex, setFeaturedMovieIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const trendingMovies = useMemo(() => movies?.slice(0, 7) || [], [movies]);
   const newReleases = useMemo(() => movies?.slice(7, 14) || [], [movies]);
   
   const featuredPool = useMemo(() => {
       const pool = [...trendingMovies, ...newReleases];
-      // remove duplicates and limit to 5
       return pool.filter((movie, index, self) => 
         index === self.findIndex((m) => m.id === movie.id)
       ).slice(0, 5);
   }, [trendingMovies, newReleases]);
 
+  const featuredMovie = featuredPool[currentIndex];
+  const previousMovie = previousIndex !== null ? featuredPool[previousIndex] : null;
 
   useEffect(() => {
-    if (featuredPool.length > 0) {
-      setFeaturedMovie(featuredPool[featuredMovieIndex]);
-
+    if (featuredPool.length > 1) {
       const interval = setInterval(() => {
-        setFeaturedMovieIndex((prevIndex) => (prevIndex + 1) % featuredPool.length);
-      }, 3000); // Change movie every 3 seconds
+        setIsAnimating(true);
+        setPreviousIndex(currentIndex);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % featuredPool.length);
+        
+        // Match animation duration
+        setTimeout(() => {
+            setIsAnimating(false);
+            setPreviousIndex(null);
+        }, 500); 
+
+      }, 3000);
 
       return () => clearInterval(interval);
     }
-  }, [featuredPool, featuredMovieIndex]);
-
-  useEffect(() => {
-    if (featuredPool.length > 0) {
-        setFeaturedMovie(featuredPool[featuredMovieIndex]);
-    }
-  }, [featuredMovieIndex, featuredPool]);
-
-
-  const genres = useMemo(() => {
-    if (!movies) return [];
-    return [...new Set(movies.flatMap((movie) => movie.genre))].sort();
-  }, [movies]);
+  }, [featuredPool.length, currentIndex]);
 
 
   if (isLoading) {
@@ -104,13 +101,25 @@ export default function Home() {
       {movies && movies.length > 0 && featuredMovie ? (
         <>
           <section className="relative h-[60vh] min-h-[400px] w-full mt-4 overflow-hidden">
+            {previousMovie && (
+              <Image
+                key={previousMovie.id}
+                src={previousMovie.heroImageUrl}
+                alt={`Hero image for ${previousMovie.title}`}
+                fill
+                priority
+                className="object-cover animate-slide-out-to-left"
+              />
+            )}
             <Image
               key={featuredMovie.id}
               src={featuredMovie.heroImageUrl}
               alt={`Hero image for ${featuredMovie.title}`}
               fill
               priority
-              className="object-cover animate-fade-in"
+              className={cn("object-cover", {
+                "animate-slide-in-from-right": isAnimating,
+              })}
               data-ai-hint={featuredMovie.heroImageHint}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
