@@ -1,17 +1,19 @@
 'use client';
 
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Star, Clock, Users } from 'lucide-react';
-import { VideoPlayer } from '@/components/movie/video-player';
+import { Star, Clock, Users, PlayCircle } from 'lucide-react';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
-export default function MovieDetailPage({ params: { id } }: { params: { id: string } }) {
+export default function MovieDetailPage({ params }: { params: { id: string } }) {
   const firestore = useFirestore();
-  
+  const { id } = params;
+
   const movieRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
     return doc(firestore, 'movies', id);
@@ -79,7 +81,12 @@ export default function MovieDetailPage({ params: { id } }: { params: { id: stri
               {movie.longDescription}
             </p>
             <div className="mt-4">
-              <VideoPlayer movie={movie} />
+              <Button size="lg" asChild className="bg-accent hover:bg-accent/80">
+                <Link href={`/play/${movie.id}`}>
+                  <PlayCircle />
+                  Play
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

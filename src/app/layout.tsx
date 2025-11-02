@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
 import { WatchlistProvider } from '@/contexts/watchlist-context';
-import Header from '@/components/layout/header';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import ClientLayout from './client-layout';
 
 export const metadata: Metadata = {
   title: 'CineView',
@@ -32,9 +31,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <FirebaseClientProvider>
           <WatchlistProvider>
-            <Header />
-            <main>{children}</main>
-            <Toaster />
+            <ClientLayout>{children}</ClientLayout>
           </WatchlistProvider>
         </FirebaseClientProvider>
       </body>

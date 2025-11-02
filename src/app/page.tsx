@@ -91,7 +91,7 @@ export default function Home() {
                 </p>
                 <div className="flex items-center gap-4">
                   <Button asChild size="lg" className="bg-accent hover:bg-accent/80">
-                    <Link href={`/movies/${featuredMovie.id}`}>
+                    <Link href={`/play/${featuredMovie.id}`}>
                       <PlayCircle />
                       Play Now
                     </Link>
