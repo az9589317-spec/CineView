@@ -7,8 +7,6 @@ import ImageKit from 'imagekit';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { initializeServerApp } from '@/firebase/server-init';
 import { revalidatePath } from 'next/cache';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
@@ -106,15 +104,6 @@ export async function saveMovie(movieData: Omit<Movie, 'id' | 'rating'>) {
 
     } catch (error) {
         console.error('Error saving movie:', error);
-        
-        const permissionError = new FirestorePermissionError({
-            path: 'movies',
-            operation: 'create',
-            requestResourceData: movieData,
-        });
-
-        errorEmitter.emit('permission-error', permissionError);
-
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, message: `Failed to save movie: ${errorMessage}` };
     }
