@@ -68,7 +68,7 @@ async function uploadToImagekit(file: File, folder: string) {
 }
 
 export async function uploadFile(formData: FormData, type: 'poster' | 'video') {
-    const file = formData.get(type === 'poster' ? 'posterImage' : 'videoFile') as File;
+    const file = formData.get('file') as File;
     if (!file) {
         return { success: false, message: 'No file provided.' };
     }
