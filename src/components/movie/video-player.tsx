@@ -14,9 +14,10 @@ import { useWatchlist } from '@/contexts/watchlist-context';
 
 interface VideoPlayerProps {
   movie: Movie;
+  trigger?: React.ReactNode;
 }
 
-export function VideoPlayer({ movie }: VideoPlayerProps) {
+export function VideoPlayer({ movie, trigger }: VideoPlayerProps) {
   const { isInWatchlist, addToWatchlist, removeFromWatchlist, isLoaded } = useWatchlist();
   const onWatchlist = isInWatchlist(movie.id);
 
@@ -31,10 +32,12 @@ export function VideoPlayer({ movie }: VideoPlayerProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="lg" className="bg-accent hover:bg-accent/80">
-          <PlayCircle />
-          Play
-        </Button>
+        {trigger || (
+            <Button size="lg" className="bg-accent hover:bg-accent/80">
+                <PlayCircle />
+                Play
+            </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-4xl p-0">
         <DialogHeader className="p-4">
@@ -56,6 +59,7 @@ export function VideoPlayer({ movie }: VideoPlayerProps) {
              <video
                 src={movie.videoUrl}
                 controls
+                autoPlay
                 className="h-full w-full"
              />
           ) : (

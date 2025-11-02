@@ -13,6 +13,7 @@ import { collection } from 'firebase/firestore';
 import type { Movie } from '@/lib/types';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VideoPlayer } from '@/components/movie/video-player';
 
 const adminEmails = ['jupiterbania472@gmail.com', 'az9589317@gmail.com'];
 
@@ -90,11 +91,7 @@ export default function Home() {
                   {featuredMovie.description}
                 </p>
                 <div className="flex items-center gap-4">
-                  <Button asChild size="lg">
-                    <Link href={`/movies/${featuredMovie.id}`}>
-                      View Details
-                    </Link>
-                  </Button>
+                  <VideoPlayer movie={featuredMovie} />
                 </div>
               </div>
             </div>
